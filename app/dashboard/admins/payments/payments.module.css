@@ -1,0 +1,487 @@
+.container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0 0 4px;
+}
+
+.pageSubtitle {
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.rowChargeButton {
+  padding: 0.5rem 1rem !important;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rowChargeButton:hover {
+  opacity: 0.9;
+}
+.chargeInvoiceButton:hover {
+  opacity: 0.9;
+}
+
+.summaryCard {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+}
+
+.summaryLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+}
+
+.summaryValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.summaryCount {
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+.mainColumn {
+  min-width: 0;
+}
+
+.filterBar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.searchForm {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: var(--card-bg, #fff);
+}
+
+.searchButton {
+  padding: 10px 18px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.searchButton:hover {
+  opacity: 0.9;
+}
+
+.typeSelect {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  background: var(--card-bg, #fff);
+  font-size: 0.9rem;
+  min-width: 160px;
+}
+
+.tableWrapper {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color, #f1f5f9);
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.rightAlign {
+  text-align: right;
+}
+
+.invoiceCell {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.customerName {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.customerCode {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.dateCell {
+  color: var(--text-muted, #64748b);
+  white-space: nowrap;
+}
+
+.typeBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.type_booking_deposit {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.type_booking_full {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.type_balance {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.type_vehicle {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.viewPdfButton {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.viewPdfButton:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.noPdf {
+  color: var(--text-muted, #cbd5e1);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pageButton {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--card-bg, #fff);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.pageButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageIndicator {
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+}
+
+.activityPanel {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  padding: 18px;
+  position: sticky;
+  top: 24px;
+}
+
+.activityHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.activityTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.activityEmpty {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.activityItem {
+  padding: 12px;
+  border: 1px solid var(--border-color, #f1f5f9);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.activityItemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.activityInvoice {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+}
+
+.activityAmount {
+  font-weight: 700;
+  color: #166534;
+  font-size: 0.9rem;
+}
+
+.activityItemBottom {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748b);
+}
+
+.activityPdfLink {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.activityPdfLink:hover {
+  text-decoration: underline;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 820px;
+  height: 90vh;
+  max-height: 900px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted, #64748b);
+  padding: 4px 8px;
+}
+
+.modalBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalStatus,
+.modalError {
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.modalError {
+  color: #b91c1c;
+}
+
+.pdfFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Tablet ── */
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .activityPanel {
+    position: static;
+  }
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .container {
+    padding: 16px;
+  }
+  .headerRow {
+    flex-direction: column;
+  }
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .summaryCard {
+    width: 100%;
+  }
+  .filterBar {
+    flex-direction: column;
+  }
+  .typeSelect {
+    width: 100%;
+  }
+  .modalContent {
+    height: 95vh;
+    border-radius: 0;
+  }
+}

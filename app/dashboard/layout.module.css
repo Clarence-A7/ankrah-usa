@@ -1,0 +1,19 @@
+.layoutWrapper {
+  display: flex;
+  height: 100dvh; /* fixed to the viewport, not min-height — this is what stops the shell itself from growing/scrolling */
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.mainContent {
+  flex: 1;
+  min-width: 0; /* prevents flex children with wide content from pushing the sidebar off-screen */
+  max-height: 100vh;
+  overflow-y: auto; /* fallback only — if page content fits, this never shows a scrollbar */
+}
+
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}

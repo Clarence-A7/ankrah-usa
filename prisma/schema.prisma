@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  name                 String
+  password             String
+  role                 UserRole  @default(origin_admin)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  address              String?
+  phone                String?
+  staffId              String?   @unique(map: "staffId")
+  avatarUrl            String?   @db.LongText
+  paymentsLastViewedAt DateTime? @db.DateTime(0)
+
+  @@map("users")
+}
+
+model Container {
+  id              String           @id
+  size            Int
+  vessel          String
+  departureDate   DateTime
+  eta             DateTime
+  shippingLine    String
+  sealNumber      String           @unique
+  originCity      String
+  destinationCity String
+  status          ContainerStatus?
+  loadedBy        String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  arrivedAt       DateTime?
+  arrivedById     String?
+  clearedAt       DateTime?        @db.DateTime(0)
+  clearedById     String?
+  sealVerifiedAt  DateTime?        @db.DateTime(0)
+  tamperFlagged   Boolean          @default(false)
+  unstuffedAt     DateTime?
+  invoices        Invoice[]
+
+  @@map("containers")
+}
+
+model Invoice {
+  id              String          @id @default(uuid())
+  invoiceNumber   String          @unique
+  destinationCity String
+  amountDue       Decimal         @db.Decimal(10, 2)
+  loadStatus      String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  containerId     String?
+  amountPaid      Decimal         @default(0.00) @db.Decimal(10, 2)
+  consigneeName   String
+  consigneePhone  String
+  consignerEmail  String
+  consignerName   String
+  consignerPhone  String
+  customerCode    String?         @default("GUEST") @db.VarChar(50)
+  deliveredAt     DateTime?
+  deliveryDriver  String?         @db.VarChar(50)
+  dispatchedAt    DateTime?
+  pickupCity      String?         @db.VarChar(100)
+  pickupDriver    String?         @db.VarChar(50)
+  pickupState     String?         @db.VarChar(100)
+  pickupStreet    String?
+  pickupZip       String?         @db.VarChar(20)
+  shipmentMode    String?         @db.VarChar(20)
+  status          String
+  admin_charges   admin_charges[]
+  container       Container?      @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  items           ManifestItem[]
+  statusHistory   StatusHistory[]
+
+  @@index([containerId], map: "invoices_containerId_fkey")
+  @@index([deliveryDriver])
+  @@index([pickupDriver], map: "invoices_assignedDriver_idx")
+  @@map("invoices")
+}
+
+model ManifestItem {
+  id              String   @id @default(uuid())
+  itemType        String
+  quantity        Int      @default(1)
+  unitPrice       Decimal  @default(0.00) @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  invoiceId       String
+  scannedQuantity Int      @default(0)
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId], map: "items_invoiceId_fkey")
+  @@map("items")
+}
+
+model Rate {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  itemName   String    @unique(map: "itemName") @db.VarChar(120)
+  basePrice  Decimal   @default(0.00) @db.Decimal(10, 2)
+  isActive   Boolean   @default(true)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
+
+  @@map("rates")
+}
+
+model customers {
+  id            String   @id
+  customerCode  String   @unique(map: "Customer_customerCode_key") @db.VarChar(20)
+  firstName     String   @db.VarChar(100)
+  lastName      String   @db.VarChar(100)
+  email         String   @unique(map: "Customer_email_key")
+  passwordHash  String   @db.VarChar(255)
+  token         String?  @db.VarChar(255)
+  tokenExpiresAt DateTime? @db.DateTime(3)
+  phone         String   @db.VarChar(20)
+  streetAddress String?  @db.VarChar(255)
+  city          String?  @db.VarChar(100)
+  state         String?  @db.VarChar(50)
+  zipCode       String?  @db.VarChar(20)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now()) @db.Timestamp(3)
+  updatedAt     DateTime @default(now()) @db.Timestamp(3)
+}
+
+model StatusHistory {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  status      String   @db.VarChar(50)
+  changedById String?
+  createdAt   DateTime @default(now())
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_statusHistory_invoice")
+
+  @@index([invoiceId], map: "idx_statusHistory_invoice")
+  @@index([invoiceId, createdAt], map: "idx_statusHistory_invoice_created")
+  @@map("statushistory")
+}
+
+model VehicleQuoteRequest {
+  id                  String             @id @db.VarChar(24)
+  referenceNumber     String             @unique(map: "uniq_reference_number") @db.VarChar(20)
+  requesterName       String             @db.VarChar(255)
+  requesterEmail      String             @db.VarChar(255)
+  requesterPhone      String             @db.VarChar(30)
+  vehicleYear         Int                @db.SmallInt
+  vehicleMake         String             @db.VarChar(100)
+  vehicleModel        String             @db.VarChar(100)
+  vin                 String             @db.VarChar(17)
+  mileage             Int?
+  titleStatus         VehicleTitleStatus
+  isLeftHandDrive     Boolean            @default(true)
+  vehicleImageUrl     String?            @db.LongText
+  pickupStreet        String             @db.VarChar(255)
+  pickupCity          String             @db.VarChar(100)
+  pickupState         String             @db.VarChar(100)
+  pickupZip           String             @db.VarChar(20)
+  destinationCity     String             @db.VarChar(100)
+  notes               String?            @db.Text
+  customerCode        String             @default("GUEST") @db.VarChar(50)
+  status              VehicleQuoteStatus @default(new)
+  bookedInvoiceNumber String?
+  quotedAmount        Decimal?           @db.Decimal(10, 2)
+  quotedAt            DateTime?          @db.DateTime(0)
+  quotedById          String?            @db.VarChar(50)
+  createdAt           DateTime           @default(now()) @db.DateTime(0)
+  updatedAt           DateTime           @default(now()) @updatedAt @db.DateTime(0)
+  stripeSessionId     String?            @db.VarChar(255)
+
+  @@index([createdAt], map: "idx_created_at")
+  @@index([status], map: "idx_status")
+  @@index([vin], map: "idx_vin")
+  @@map("vehicle_quote_requests")
+}
+
+model payments {
+  id              String               @id @db.VarChar(36)
+  invoiceId       String               @db.VarChar(36)
+  invoiceNumber   String               @db.VarChar(20)
+  customerCode    String               @db.VarChar(20)
+  consignerName   String               @db.VarChar(100)
+  amount          Decimal              @db.Decimal(10, 2)
+  paymentType     payments_paymentType
+  stripeSessionId String               @unique(map: "uq_stripeSessionId") @db.VarChar(255)
+  pdfFilename     String?              @db.VarChar(255)
+  createdAt       DateTime             @default(now()) @db.DateTime(0)
+
+  @@index([createdAt], map: "idx_createdAt")
+  @@index([invoiceId], map: "idx_invoiceId")
+  @@index([invoiceNumber], map: "idx_invoiceNumber")
+}
+
+model admin_charges {
+  id             String   @id
+  invoiceId      String
+  invoiceNumber  String   @db.VarChar(20)
+  description    String   @db.VarChar(255)
+  amount         Decimal  @db.Decimal(10, 2)
+  addedByAdminId String
+  createdAt      DateTime @default(now()) @db.DateTime(0)
+  invoices       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_admin_charges_invoice")
+
+  @@index([invoiceId], map: "idx_invoiceId")
+}
+
+// Brute-force / abuse throttle used by the PHP customer portal (login,
+// register, tracking). PHP-managed; declared here so Prisma never drops it.
+model rate_limits {
+  key         String   @id @db.VarChar(191)
+  windowStart DateTime @db.DateTime(3)
+  count       Int      @default(0)
+  updatedAt   DateTime @db.DateTime(3)
+}
+
+// Password-reset tokens for BOTH admins/staff (subjectType 'user') and portal
+// customers (subjectType 'customer'). We store only the SHA-256 of the token;
+// the raw token lives solely in the emailed link. Single-use + time-limited.
+model password_reset_tokens {
+  id          String    @id
+  subjectType String    @db.VarChar(16)
+  subjectId   String    @db.VarChar(191)
+  tokenHash   String    @db.VarChar(64)
+  expiresAt   DateTime  @db.DateTime(3)
+  usedAt      DateTime? @db.DateTime(3)
+  createdAt   DateTime  @default(now()) @db.DateTime(3)
+
+  @@index([tokenHash])
+  @@index([subjectType, subjectId])
+}
+
+enum UserRole {
+  super_admin
+  origin_admin
+  destination_admin
+  o_driver
+  d_driver
+}
+
+enum ContainerStatus {
+  In_Transit      @map("In-Transit")
+  Arrived
+  Cleared
+  Received_At_Hub @map("Received At Hub")
+}
+
+enum VehicleTitleStatus {
+  clear
+  lien
+  unsure
+}
+
+enum VehicleQuoteStatus {
+  new
+  contacted
+  quoted
+  booked
+  declined
+}
+
+enum payments_paymentType {
+  booking_deposit
+  booking_full
+  balance
+  vehicle
+}

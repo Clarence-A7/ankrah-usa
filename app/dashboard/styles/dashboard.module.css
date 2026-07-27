@@ -1,0 +1,281 @@
+.dashboardContainer {
+  padding: 2rem; /* 32px padding for an open, clean layout */
+  background-color: #f8f9fa;
+  max-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header Section styling */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #202124;
+  margin: 0;
+  font-family: montserrat, sans-serif;
+}
+
+.titleCount {
+  color: #5f6368;
+  font-weight: 400;
+  font-size: 1.25rem;
+  margin-left: 0.5rem;
+}
+
+/* Actions panel matching the top right controls */
+.actionControls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.actionBtn {
+min-width: 100px;
+}
+
+.searchInput, .filterSelect {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background-color: #ffffff;
+  color: #3c4043;
+  outline: none;
+  transition: border-color 0.15s ease;
+  font-family: montserrat, sans-serif;
+}
+
+.searchInput:focus, .filterSelect:focus {
+  border-color: #1a73e8;
+}
+.filterBtn, .dispatchBtn, .packingListBtn, .actionBtn, .clearBtn, .bulkDispatchBtn {
+  padding: 0.5rem 1rem !important;
+
+}
+
+.filterBtn:hover {
+  background-color: #1b5e20;
+}
+.bulkDispatchBtn{
+  background-color: orange !important;
+}
+.bulkDispatchBtn:hover{
+  background-color: rgb(136, 89, 3) !important;
+}
+/* Floating Action Button Wrapper */
+.floatingActionBtn {
+  position: fixed;
+  bottom: 2.5rem; /* 40px from bottom */
+  right: 2.5rem;  /* 40px from right */
+  display: flex;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  z-index: 1000; /* Stays above data tables */
+  transition: all 0.2s ease-in-out;
+  align-items: center !important;
+  align-content: center !important;
+
+}
+.floatingActionBtn span {
+  display: flex;
+  align-self: center !important;
+}
+
+
+.fabIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  align-self: center !important;
+}
+/* Clickable Link for Container ID */
+.linkButton {
+  font-size: 0.85rem;
+  background: none;
+  border: none;
+  color: #1a73e8;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.linkButton:hover {
+  color: #1557b0;
+}
+
+/* Modal Overlay Background */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+/* Modal Box Container */
+.modalContent {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 650px;
+  max-width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.2s ease-out;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #202124;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.closeBtn:hover {
+  color: #202124;
+}
+
+.modalBody {
+  padding: 1.5rem;
+}
+
+/* Information Grid Layout */
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+.detailsGridFinancials {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+.detailsGridFinancials .detailItem:nth-child(1), 
+.detailsGridFinancials .detailItem:nth-child(2) , 
+.detailsGridFinancials .detailItem:nth-child(3) {
+  border-right: 1px solid #b3b3b3;
+}
+.container,
+.loadDetails,
+.consignerDetails{
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e8eaed;
+  padding-bottom: 1.5rem;
+}
+
+
+.consigneeDetails {
+  background-color: #f1f3f4;
+  padding: 1.25rem;
+  border-radius: 8px;
+}
+.containerFinancials {
+  background-color: #f1f3f4;
+  padding: 1.25rem;
+  border-radius: 8px;
+  }
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #5f6368;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.detailValue {
+  font-size: 0.95rem;
+  color: #202124;
+  font-weight: 500;
+}
+.bottomSection{
+  margin-top: 1rem;
+  justify-content: space-between;
+  display: flex;
+}
+
+@keyframes modalFadeIn {
+  from {
+    transform: translateY(15px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* app/styles/dashboard.module.css */
+.dashboardMainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 32px;
+}
+
+.statsSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.statCard {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+/* Add your other styles below following camelCase naming conventions... */
+
+.dueBtn,
+.dueBtn:disabled,
+.dueBtn:disabled:hover {
+  background-color: #fd3b002f !important; /* red-600 */
+  color: #fd4d4d !important;
+  opacity: 1 !important;
+  border: 1px solid #fd4d4d !important;
+  cursor: not-allowed !important;
+}
+
+.dueBtn:hover {
+  background-color: #dc2626 !important; /* no hover change — it's not clickable */
+}

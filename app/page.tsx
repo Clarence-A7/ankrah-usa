@@ -1,65 +1,145 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState } from "react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import styles from "./styles/login.module.css";
+import { authenticateUser } from "./login/actions";
+import { useRouter } from "next/navigation";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
+
+      const result = await authenticateUser(null, formData);
+
+      if (result.success && result.user) {
+        const role = result.user.role;
+        if (role === "o_driver") {
+          router.push("/dashboard/drivers/origin");
+        } else if (role === "d_driver") {
+          router.push("/dashboard/drivers/destination");
+        } else {
+          router.push("/dashboard");
+        }
+        router.refresh();
+      } else {
+        setErrorMessage(
+          result.error || "An unexpected validation failure occurred.",
+        );
+      }
+    } catch (error) {
+      console.error("Login client exception:", error);
+      setErrorMessage(
+        "A network routing fault blocked processing. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className={styles.page}>
+      {/* LEFT — login card */}
+      <section className={styles.left}>
+        <div className={styles.card}>
+          <div className={styles.brand}>
+            <h1 className={styles.title}>Sign in</h1>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Ankrah F&L" className={styles.logo} />
+          </div>
+
+          {errorMessage && <div className={styles.errorBanner}>{errorMessage}</div>}
+
+          <form onSubmit={handleLoginSubmit} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label}>Work email</label>
+              <div className={styles.inputWrap}>
+                <span className={styles.icon}>
+                  <Mail size={18} />
+                </span>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@ankrahfl.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={styles.input}
+                  disabled={isLoading}
+                  autoComplete="email"
+                  inputMode="email"
+                />
+              </div>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Password</label>
+              <div className={styles.inputWrap}>
+                <span className={styles.icon}>
+                  <Lock size={18} />
+                </span>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={styles.input}
+                  disabled={isLoading}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className={styles.toggle}
+                  disabled={isLoading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <div className={styles.forgotRow}>
+                <a href="/forgot-password" className={styles.forgot}>
+                  Forgot password?
+                </a>
+              </div>
+            </div>
+
+            <button type="submit" className={styles.submit} disabled={isLoading}>
+              {isLoading ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+        </div>
+
+        <p className={styles.credit}>Built by DiaT LLC</p>
+      </section>
+
+      {/* RIGHT — brand / tagline panel (desktop only) */}
+      <aside className={styles.right}>
+        <div className={styles.rightGlow} aria-hidden="true" />
+        <div className={styles.rightInner}>
+          <h2 className={styles.tagline}>
+            Freight &amp; logistics management — consolidation to delivery.
+          </h2>
+          <p className={styles.taglineSub}>
+            Manifests, live tracking, dispatch, and reporting — one platform,
+            from first-mile pickup to final delivery.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </aside>
+    </main>
   );
 }

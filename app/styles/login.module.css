@@ -1,0 +1,238 @@
+/* Split-screen premium login: card on the left, brand gradient panel on the right. */
+
+.page {
+  min-height: 100dvh;
+  display: flex;
+  background: linear-gradient(140deg, #3f74c4 0%, #2e63af 48%, #1e457f 100%);
+}
+
+/* ── LEFT: login card ─────────────────────────────────────────────── */
+.left {
+  flex: 1 1 50%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: #ffffff;
+  border: 1px solid #eef2f7;
+  border-radius: 22px;
+  padding: 2.75rem 2.25rem 2.35rem;
+  box-shadow:
+    0 24px 64px rgba(15, 23, 42, 0.09),
+    0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.logo {
+  height: 78px;
+  width: auto;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.errorBanner {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+}
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 7px;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.icon {
+  position: absolute;
+  left: 14px;
+  display: flex;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: #fbfcfe;
+  border: 1px solid #d7dee8;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.input::placeholder {
+  color: #9aa7b8;
+}
+.input:focus {
+  border-color: #2e63af;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(46, 99, 175, 0.12);
+}
+
+.toggle {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.toggle:hover:not(:disabled) {
+  color: #475569;
+}
+
+.forgotRow {
+  text-align: right;
+  margin-top: 8px;
+}
+.forgot {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2e63af;
+  text-decoration: none;
+}
+.forgot:hover {
+  text-decoration: underline;
+}
+
+.submit {
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 13px 14px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #2e63af;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s, box-shadow 0.15s;
+  box-shadow: 0 8px 20px rgba(46, 99, 175, 0.22);
+}
+.submit:hover:not(:disabled) {
+  background: #285699;
+}
+.submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.submit:disabled {
+  background: #93aad4;
+  box-shadow: none;
+  cursor: default;
+}
+
+.credit {
+  position: absolute;
+  bottom: 1.5rem;
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.4px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── RIGHT: brand gradient panel ──────────────────────────────────── */
+.right {
+  flex: 1 1 50%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 4.5rem;
+  color: #ffffff;
+}
+.rightGlow {
+  position: absolute;
+  top: -18%;
+  right: -12%;
+  width: 540px;
+  height: 540px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15), transparent 62%);
+  pointer-events: none;
+}
+.rightLogo {
+  position: absolute;
+  top: 2.75rem;
+  left: 4.5rem;
+  height: 40px;
+  width: auto;
+  opacity: 0.95;
+}
+.rightInner {
+  position: relative;
+  max-width: 470px;
+}
+.tagline {
+  margin: 0;
+  color: #ffffff;
+  font-size: 2.35rem;
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+}
+.taglineSub {
+  margin: 1.25rem 0 0;
+  max-width: 430px;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* ── Responsive: stack to just the card ───────────────────────────── */
+@media (max-width: 900px) {
+  .right {
+    display: none;
+  }
+  .left {
+    flex: 1 1 100%;
+  }
+}
+@media (max-width: 480px) {
+  .card {
+    padding: 2.25rem 1.5rem 2rem;
+    border-radius: 18px;
+  }
+}

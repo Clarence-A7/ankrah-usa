@@ -1,0 +1,372 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted, #64748b);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted, #64748b);
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.searchForm {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.searchButton {
+  padding: 11px 18px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.searchButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorText {
+  color: #b91c1c;
+  font-size: 0.82rem;
+  margin: 8px 0;
+}
+
+.successText {
+  color: #166534;
+  font-size: 0.82rem;
+  margin: 8px 0 0;
+}
+
+.invoiceCard {
+  background: #f8fafc;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.invoiceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.invoiceNumber {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-primary);
+}
+
+.invoiceStatus {
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  font-weight: 600;
+}
+
+.invoiceRow,
+.invoiceRowHighlight {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 0.87rem;
+  color: #334155;
+}
+
+.invoiceRowHighlight {
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  margin-top: 4px;
+  padding-top: 8px;
+  font-size: 0.95rem;
+  color: #b91c1c;
+}
+
+.paidNote {
+  margin-top: 14px;
+  color: #166534;
+  background: #dcfce7;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.amountOptions {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radioOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.87rem;
+  color: #334155;
+  cursor: pointer;
+}
+
+.customAmountInput {
+  margin-top: 4px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  font-size: 0.87rem;
+}
+
+.generateButton {
+  margin-top: 14px;
+  width: 100%;
+  padding: 11px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.87rem;
+  cursor: pointer;
+}
+
+.generateButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.linkResultBox {
+  margin-top: 14px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+}
+
+.linkResultLabel {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0 0 8px;
+}
+
+.linkRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.linkInput {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: #475569;
+  background: #f8fafc;
+  min-width: 0;
+}
+
+.copyButton {
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.emailButton {
+  width: 100%;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--border-color, #e2e8f0);
+  color: #334155;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.emailButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Tablet / Mobile ── */
+@media (max-width: 640px) {
+  .modal {
+    max-height: 95vh;
+    border-radius: 12px 12px 0 0;
+    align-self: flex-end;
+  }
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .linkRow {
+    flex-direction: column;
+  }
+}
+
+.addChargeSection {
+  margin-top: 12px;
+}
+
+.addChargeToggle {
+  background: none;
+  border: 1px dashed var(--border-color, #cbd5e1);
+  color: var(--color-primary);
+  font-size: 0.83rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.addChargeToggle:hover {
+  background: #f8fafc;
+}
+
+.addChargeBox {
+  background: #fff;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.addChargeLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.chargeDescriptionInput,
+.chargeAmountInput {
+  padding: 9px 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  font-size: 0.87rem;
+}
+
+.addChargeActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.addChargeCancelBtn {
+  padding: 8px 14px;
+  background: none;
+  border: 1px solid var(--border-color, #e2e8f0);
+  color: #64748b;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.addChargeSubmitBtn {
+  padding: 8px 16px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addChargeSubmitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rowChargeButton {
+  padding: 6px 12px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rowChargeButton:hover {
+  opacity: 0.9;
+}

@@ -1,0 +1,124 @@
+.tableWrapper {
+  width: 100%;
+  max-width: 90rem;
+  overflow-x: auto; /* safety net above 640px for very wide column sets — not the primary responsive strategy */
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--card-bg);
+  box-sizing: border-box;
+  justify-self: center;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+  font-family: var(--font-sans);
+  background-color: var(--card-bg);
+}
+
+.table th {
+  background-color: var(--table-header-bg);
+  color: var(--muted-text);
+  padding: 12px 16px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--foreground);
+  font-weight: 400;
+  box-sizing: border-box;
+}
+
+.table tr:hover {
+  background-color: var(--table-header-bg);
+}
+
+/* Data fields that need to stay code-like (invoice numbers, amounts) rather
+   than the body font — apply via className={styles.textMono} on the cell
+   content where that matters. */
+.textMono {
+  font-family: var(--font-mono), monospace;
+}
+
+/* ==========================================================================
+   Mobile: stacked cards instead of horizontal scroll. Every column stays
+   visible — each td becomes its own labeled row inside the card, using
+   data-label (set in Table.tsx) as the visible column name.
+   ========================================================================== */
+@media (max-width: 640px) {
+  .tableWrapper {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+    padding: 0.5rem;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* thead stays in the DOM (screen readers still get column context via the
+     role="columnheader" cells) but is visually hidden rather than removed —
+     display:none would also remove it from the accessibility tree. */
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--card-bg);
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .table tr:hover {
+    background-color: var(--card-bg); /* row hover doesn't mean much as a card list — disable it here */
+  }
+
+  .table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 44px; /* touch target */
+    padding: 0.6rem 0.9rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .table td:last-child {
+    border-bottom: none;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--muted-text);
+    text-align: left;
+    flex-shrink: 0;
+  }
+}

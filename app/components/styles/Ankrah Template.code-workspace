@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../laragon/www/ankrah"
+		},
+		{
+			"path": "../../../../laragon/www/localankrah"
+		},
+		{
+			"path": "../../../../AnkrahFL"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "localankrah"
+	}
+}

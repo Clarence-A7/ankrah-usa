@@ -1,0 +1,582 @@
+/* Semantic status colors — not part of the base token set, defined locally
+   and scoped to .page so they cascade to every descendant via inheritance. */
+.page {
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+
+  max-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  padding: 1.5rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .page {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    padding: 2.5rem;
+  }
+}
+
+.container {
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+/* Header ---------------------------------------------------------------- */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.eyebrow {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted-text);
+  margin: 0;
+}
+
+.title {
+  font-size: 1.75rem;
+  margin: 0.25rem 0 0;
+  /* color + font-family inherit from the global h1 rule (var(--color-primary),
+     var(--font-heading)) — not overridden here so it stays in sync with the
+     rest of the app if those tokens change. */
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scopeBadge {
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: var(--radius-button);
+  padding: 0.25rem 0.75rem;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-text);
+}
+
+.updatedAt {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  color: var(--muted-text);
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .updatedAt {
+    display: inline;
+  }
+}
+
+/* Layout helpers ---------------------------------------------------------- */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .grid2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 0.75rem; /* blocky, matches --radius-button's direction without being a pill */
+  padding: 1.25rem;
+}
+
+.cardLg {
+  padding: 1.5rem;
+}
+
+/* Hero trend card ---------------------------------------------------------- */
+.heroTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.heroValue {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 0.5rem 0 0;
+  line-height: 1.1;
+}
+
+.heroCaption {
+  font-size: 13px;
+  color: var(--muted-text);
+  margin: 0.25rem 0 0;
+}
+
+.heroChart {
+  margin-top: 1rem;
+}
+
+.sparkline {
+  display: block;
+  width: 100%;
+  height: 56px;
+}
+
+.sparklineLabels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  color: var(--muted-text);
+  margin-top: 0.25rem;
+}
+
+/* Delta badge ---------------------------------------------------------- */
+.deltaBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: var(--radius-button);
+  padding: 0.125rem 0.5rem;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.deltaBadgeNeutral {
+  background: var(--table-header-bg);
+  color: var(--muted-text);
+}
+
+.deltaBadgeUp {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--success);
+}
+
+.deltaBadgeDown {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--danger);
+}
+
+/* Hub snapshot (origin admin secondary card) ------------------------------ */
+.hubGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.hubStatValue {
+  font-family: var(--font-heading);
+  font-size: 1.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.hubStatLabel {
+  font-size: 13px;
+  color: var(--muted-text);
+  margin: 0.25rem 0 0;
+}
+
+/* Pipeline rail ---------------------------------------------------------- */
+.pipelineHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.pipelineTitle {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted-text);
+  margin: 0;
+}
+
+.pipelineTotal {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  color: var(--muted-text);
+}
+
+.pipelineBar {
+  display: flex;
+  height: 12px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: var(--table-header-bg);
+}
+
+.pipelineSegment {
+  height: 100%;
+}
+
+.pipelineSegment:first-child {
+  border-top-left-radius: 0.375rem;
+  border-bottom-left-radius: 0.375rem;
+}
+
+.pipelineSegment:last-child {
+  border-top-right-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.pipelineLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-top: 1rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px; /* small status dots, not a button/badge shape — exempt from the geometric rule */
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  color: var(--muted-text);
+}
+
+.legendCount {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+/* Alert bar ---------------------------------------------------------- */
+.alertBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 0.75rem;
+  padding: 0.9rem 1.25rem;
+}
+
+.alertBarActive {
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-color: rgba(220, 38, 38, 0.3);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.alertDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--success);
+}
+
+.alertDotActive {
+  background: var(--danger);
+}
+
+.alertText {
+  font-size: 13px;
+  color: var(--muted-text);
+  margin: 0;
+}
+
+.alertItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alertItemText {
+  font-size: 13px;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.alertItemCount {
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+/* Sections + metric grid ---------------------------------------------------------- */
+.sectionLabel {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted-text);
+  margin: 0 0 0.75rem;
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .metricGrid3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .metricGrid4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.metricEyebrow {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted-text);
+  margin: 0;
+}
+
+.metricValue {
+  font-family: var(--font-heading);
+  font-size: 1.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin: 0.5rem 0 0;
+  color: var(--foreground);
+}
+
+.metricValueAmber {
+  color: var(--warning);
+}
+
+.metricValueTeal {
+  color: var(--success);
+}
+
+.metricValueCoral {
+  color: var(--danger);
+}
+
+.metricCaption {
+  font-size: 13px;
+  color: var(--muted-text);
+  margin: 0.25rem 0 0;
+}
+
+/* Two-column bottom row (destinations / activity) --------------------------- */
+.bottomGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .bottomGrid {
+    grid-template-columns: 2fr 3fr;
+  }
+}
+
+.destinationList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.destinationRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.destinationCity {
+  font-size: 14px;
+  color: var(--foreground);
+}
+
+.destinationCount {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted-text);
+}
+
+.destinationTrack {
+  height: 6px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--table-header-bg);
+}
+
+.destinationFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.emptyText {
+  font-size: 13px;
+  color: var(--muted-text);
+  margin: 0;
+}
+
+/* Activity list ---------------------------------------------------------- */
+.activityList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.activityItem:last-child {
+  border-bottom: none;
+}
+
+.activityInfo {
+  min-width: 0;
+}
+
+.activityInvoice {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activityStatus {
+  font-size: 12px;
+  color: var(--muted-text);
+  margin: 0.125rem 0 0;
+}
+
+.activityTime {
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  color: var(--muted-text);
+}
+
+/* Loading + error states ---------------------------------------------------------- */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.skeletonBlock {
+  border-radius: 0.75rem;
+  background: var(--table-header-bg);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeletonHero {
+  height: 10rem;
+}
+
+.skeletonBar {
+  height: 6rem;
+}
+
+.skeletonCard {
+  height: 6rem;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .skeletonGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.errorCard {
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.errorText {
+  font-size: 15px;
+  color: var(--foreground);
+  margin: 0;
+}

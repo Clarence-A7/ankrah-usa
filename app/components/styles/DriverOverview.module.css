@@ -1,0 +1,349 @@
+/*
+ * Mobile-first: base rules target phone widths. A single min-width
+ * breakpoint widens the stat grid and stop cards for tablets — drivers
+ * are assumed to be on phones in the field, so no desktop-first override
+ * is needed here the way the admin dashboard has one.
+ */
+
+.page {
+  min-height: 100dvh;
+  padding: 16px 16px 32px;
+  background: var(--background, #f5f6f8);
+  
+}
+
+.header {
+  margin-bottom: 20px;
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-text, #6c7a94);
+  margin: 0;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--foreground, #101526);
+  margin: 4px 0 0;
+}
+
+.updatedAt {
+  font-size: 13px;
+  color: var(--muted-text, #6c7a94);
+  margin: 4px 0 0;
+}
+
+.refreshBtn {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary, #2e63af);
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  min-height: 44px;
+  min-width: 44px;
+  cursor: pointer;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* --------------------------------- Stat grid --------------------------------- */
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.statTile {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e4e7ec);
+  border-radius: 14px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.statValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--foreground, #101526);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.statValueAmber {
+  color: var(--warning, #b7791f);
+}
+
+.statValueTeal {
+  color: var(--success, #1b8a6b);
+}
+
+.statValueCoral {
+  color: var(--danger, #d64545);
+}
+
+.statLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-text, #6c7a94);
+  margin: 4px 0 0;
+  line-height: 1.3;
+}
+
+/* --------------------------------- Trend card --------------------------------- */
+
+.trendCard {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e4e7ec);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.trendTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.trendValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary, #2e63af);
+  margin: 0;
+}
+
+.deltaBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.deltaBadgeUp {
+  color: var(--success, #1b8a6b);
+  background: rgba(27, 138, 107, 0.1);
+}
+
+.deltaBadgeDown {
+  color: var(--danger, #d64545);
+  background: rgba(214, 69, 69, 0.1);
+}
+
+.deltaBadgeNeutral {
+  color: var(--muted-text, #6c7a94);
+  background: rgba(108, 122, 148, 0.1);
+}
+
+/* -------------------------------- Section label -------------------------------- */
+
+.sectionLabel {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--foreground, #101526);
+  margin: 0 0 10px;
+}
+
+/* --------------------------------- Stop list ----------------------------------- */
+
+.stopList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stopCard {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e4e7ec);
+  border-radius: 14px;
+  padding: 14px 16px;
+  max-height: 50px;
+  gap: 0;
+}
+
+.stopTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stopInvoice {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--foreground, #101526);
+  margin: 0;
+}
+
+.stopStatus {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.stopStatusDefault {
+  color: var(--muted-text, #6c7a94);
+  background: rgba(108, 122, 148, 0.12);
+}
+
+.stopStatusAmber {
+  color: var(--warning, #b7791f);
+  background: rgba(183, 121, 31, 0.12);
+}
+
+.stopStatusTeal {
+  color: var(--success, #1b8a6b);
+  background: rgba(27, 138, 107, 0.12);
+}
+
+.stopStatusCoral {
+  color: var(--danger, #d64545);
+  background: rgba(214, 69, 69, 0.12);
+}
+
+.stopLocation {
+  font-size: 12px;
+  color: var(--foreground, #101526);
+  margin: 0;
+}
+
+.stopTime {
+  font-size: 10px;
+  color: var(--muted-text, #6c7a94);
+  margin: 0;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: var(--muted-text, #6c7a94);
+  background: var(--card-bg, #ffffff);
+  border: 1px dashed var(--border-color, #e4e7ec);
+  border-radius: 14px;
+  padding: 20px 16px;
+  text-align: center;
+  margin: 0;
+}
+
+/* ---------------------------------- States ------------------------------------ */
+
+.errorCard {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e4e7ec);
+  border-radius: 14px;
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.errorText {
+  font-size: 14px;
+  color: var(--foreground, #101526);
+  margin: 0 0 12px;
+}
+
+.retryBtn {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primary, #2e63af);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeletonBlock {
+  background: linear-gradient(
+    90deg,
+    var(--border-color, #e4e7ec) 25%,
+    rgba(228, 231, 236, 0.5) 37%,
+    var(--border-color, #e4e7ec) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 14px;
+  margin-bottom: 8px;
+}
+
+.skeletonTile {
+  height: 74px;
+}
+
+.skeletonTrend {
+  height: 84px;
+}
+
+.skeletonStop {
+  height: 72px;
+}
+
+.stopsStack{
+  margin-bottom: 50px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* ------------------------------- Tablet and up ---------------------------------- */
+
+@media (min-width: 640px) {
+  .page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 24px 40px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .statTile {
+    padding: 18px 12px;
+  }
+
+  .statValue {
+    font-size: 26px;
+  }
+
+  .stopCard {
+    padding: 16px 20px;
+  }
+}

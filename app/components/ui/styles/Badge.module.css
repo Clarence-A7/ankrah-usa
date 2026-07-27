@@ -1,0 +1,12 @@
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.completed { background-color: #e6f4ea; color: #137333; }
+.transit { background-color: #fef7e0; color: #b06000; }
+.arrived { background-color: #e8f0fe; color: #1a73e8; }
+.cleared { background-color: #e0f2f1; color: #00796b; }

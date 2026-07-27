@@ -1,0 +1,761 @@
+/* === My Pickups: Card Grid ===
+   app/dashboard/styles/my-pickups.module.css
+*/
+
+.pickupCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  padding: 4px;
+}
+
+.pickupCard {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 0.5px solid #e5e9f0;
+}
+
+.pickupCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1d5fd9;
+  padding: 14px 16px;
+}
+
+.pickupCardInvoice {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+/* Shipment mode label ("OCEAN", "AIR") shown under the invoice number */
+.pickupCardMode {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Status pill — integrates with the blue header instead of fighting it */
+.pickupCardHeader .statusBadge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border: 0.5px solid rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.pickupCardBody {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.pickupCardColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pickupCardLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #8a93a3;
+  margin-bottom: 2px;
+}
+
+.pickupCardName {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #1a2233;
+}
+
+.pickupCardAddress {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #4b5468;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+/* Small inline icon used before phone/address text (MapPin, Phone) */
+.inlineIcon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #8a93a3;
+}
+
+.pickupCardPhoneLink {
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #1d5fd9;
+  text-decoration: none;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pickupCardPhoneLink .inlineIcon {
+  margin-top: 0;
+  color: #1d5fd9;
+}
+
+.pickupCardPhoneLink:hover {
+  text-decoration: underline;
+}
+
+.pickupCardDivider {
+  height: 0.5px;
+  background: #edf0f5;
+  margin: 0 16px;
+}
+
+.pickupCardItems {
+  padding: 12px 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pickupCardItemList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pickupCardItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #2c3445;
+  background: #f7f9fc;
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+
+.pickupCardItemQty {
+  color: #6b7385;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.pickupCardDue {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.07);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.fullyPaidBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  font-size: 12px;
+  font-weight: 600;
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.08);
+  border: 0.5px solid rgba(21, 128, 61, 0.2);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.fullyPaidIcon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* === Collect button === */
+
+.collectBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 11px;
+  border: none;
+  border-top: 0.5px solid #edf0f5;
+  background: #1d5fd9;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  margin-top: auto;
+}
+
+.collectBtn:hover:not(:disabled) {
+  background: #1750bb;
+}
+
+.collectBtn:disabled {
+  background: #e3e7ee;
+  color: #8a93a3;
+  cursor: not-allowed;
+}
+
+.collectBtnIcon {
+  width: 15px;
+  height: 15px;
+}
+
+/* --- Modal --- */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modalCard {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a2233;
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 999px;
+  color: #6b7385;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalCloseBtn:hover {
+  background: #f4f6f9;
+  color: #1a2233;
+}
+
+.modalCloseIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.modalSubtitle {
+  font-size: 13.5px;
+  color: #4b5468;
+  margin: 4px 0 14px;
+  line-height: 1.45;
+}
+
+.modalItemList {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.modalItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f7f9fc;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: #2c3445;
+}
+
+.modalItemIndex {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a93a3;
+  min-width: 32px;
+}
+
+.modalItemType {
+  flex: 1;
+  font-weight: 500;
+}
+
+.modalItemQty {
+  font-size: 12.5px;
+  color: #6b7385;
+}
+
+.modalErrorBanner,
+.modalProgressBanner,
+.modalSuccessBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.modalErrorBanner {
+  background: rgba(185, 28, 28, 0.07);
+  color: #b91c1c;
+}
+
+.modalProgressBanner {
+  background: rgba(29, 95, 217, 0.08);
+  color: #1d5fd9;
+}
+
+.modalSuccessBanner {
+  background: rgba(21, 128, 61, 0.08);
+  color: #15803d;
+}
+
+.modalErrorIcon,
+.modalProgressIcon,
+.modalSuccessIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.modalFooter {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modalSecondaryBtn {
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 0.5px solid #e3e7ee;
+  background: #ffffff;
+  color: #4b5468;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modalSecondaryBtn:hover:not(:disabled) {
+  background: #f4f6f9;
+}
+
+.modalSecondaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modalPrimaryBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #1d5fd9;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modalPrimaryBtn:hover:not(:disabled) {
+  background: #1750bb;
+}
+
+.modalPrimaryBtn:disabled {
+  background: #aebee3;
+  cursor: not-allowed;
+}
+
+.modalPrimaryBtnIcon {
+  width: 15px;
+  height: 15px;
+}
+
+/* === Page layout & status tabs === */
+
+.pageData {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 32px;
+}
+
+/* Sticky wrapper holding search + status tabs together */
+.controlsBar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: #8a93a3;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 36px;
+  border-radius: 8px;
+  border: 0.5px solid #e3e7ee;
+  background: #f7f9fc;
+  color: #1a2233;
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.searchInput::placeholder {
+  color: #8a93a3;
+}
+
+.searchInput:focus {
+  border-color: #1d5fd9;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(29, 95, 217, 0.12);
+}
+
+.statusTabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 20px;
+  background: #f4f6f9;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.statusTab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: transparent;
+  color: #4b5468;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.statusTab:hover:not(.statusTabActive) {
+  background: rgba(29, 95, 217, 0.08);
+  color: #1d5fd9;
+}
+
+.statusTabActive {
+  background: #1d5fd9;
+  color: #ffffff;
+}
+
+.statusTabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(75, 84, 104, 0.12);
+  color: #4b5468;
+}
+
+.statusTabActive .statusTabCount {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #6b7385;
+  padding: 40px 4px;
+  text-align: center;
+}
+
+.emptyStateIcon {
+  width: 30px;
+  height: 30px;
+  color: #c3c9d4;
+}
+
+/* === Status pill colors === */
+
+.readyForPickup {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.pendingPickup {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.collected {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.receivedAtOrigin {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.readyForShipment {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.inTransit {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.arrived {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.cleared {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.readyForDelivery {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.outForDelivery {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.delivered {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.returnedToHub {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* === Page shell === */
+
+.appViewContainer {
+  padding: 24px 24px 0;
+}
+
+.dashboardActionHeadingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.viewSectionTitle {
+  font-size: 20px;
+  font-weight: 500;
+  color: #1a2233;
+  margin: 0;
+}
+
+.emptyManifestNotice {
+  padding: 40px 0;
+  text-align: center;
+  color: #6b7385;
+  font-size: 14px;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .appViewContainer {
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    margin-bottom: 3rem;
+  }
+
+  .dashboardActionHeadingRow {
+    background-color: #2e63af;
+    gap: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    color: #ffffff;
+    margin: 0;
+    padding: 1rem;
+    width: 100vw;
+    max-width: 100vw;
+    justify-content: space-around;
+  }
+  .viewSectionTitle {
+    color: #ffffff;
+    text-transform: uppercase;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .pageData {
+    margin: 0;
+    margin-bottom: 3rem;
+    max-width: 100%;
+    padding: 0.5rem;
+  }
+  .controlsBar {
+    margin-top: 3.5rem;
+    padding: 0 0.5rem;
+  }
+  .searchInput {
+    font-size: 16px; /* prevents iOS auto-zoom on focus */
+  }
+  .statusTabs {
+    flex: 1;
+    max-width: 100%;
+    overflow-x: auto;
+    margin: 0;
+    margin-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .appViewContainer {
+    width: 100vw;
+  }
+
+  .dashboardActionHeadingRow {
+    background-color: #2e63af;
+    gap: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 20;
+    color: #ffffff;
+    margin: 0;
+    padding: 1rem;
+    width: 100vw;
+    max-width: 100vw;
+    justify-content: space-around;
+  }
+
+  .pickupCardGrid {
+    margin: 0 0.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  .controlsBar {
+    padding: 0 0.5rem;
+  }
+
+  .statusTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .statusTab {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .statusTabCount {
+    padding: 0 4px;
+  }
+}
