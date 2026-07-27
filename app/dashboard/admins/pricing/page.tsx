@@ -41,31 +41,18 @@ export default function PricingPage() {
   const [editRate, setEditRate] = useState<string>("");
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // ── API ENDPOINTS ──────────────────────────────────────────────────────────
-  // PHP API base is env-driven so the same code runs in local dev and on
-  // Vercel; it falls back to the local Laragon path for `next dev`.
-  // NOTE: this is a client component, so SECURITY_TOKEN is shipped to the
-  // browser (every NEXT_PUBLIC_ value is public). Treat it as a low-value
-  // portal key, not a real secret — see the note about proxying admin writes
-  // through a Next.js server route so the true gateway token stays server-side.
-  const PHP_API_BASE =
-    process.env.NEXT_PUBLIC_PHP_API_BASE_URL || "http://localhost/localankrah/api";
-  // Filenames are case-sensitive on the production (Linux) host: the file on
-  // disk is `adminrates.php`, not `adminRates.php`.
-  const READ_API = `${PHP_API_BASE}/pickupRates.php`;
-  const WRITE_API = `${PHP_API_BASE}/adminrates.php`;
-  const SECURITY_TOKEN =
-    process.env.NEXT_PUBLIC_PICKUP_PORTAL_TOKEN || "demo-local-token";
+  // ── API ENDPOINT ───────────────────────────────────────────────────────────
+  // All PHP access goes through a same-origin Next.js server route
+  // (/api/pricing) which authenticates via the session cookie and attaches the
+  // gateway token server-side. The browser never holds a gateway secret.
+  const PRICING_API = "/api/pricing";
 
   // ── FETCH ──────────────────────────────────────────────────────────────────
   const fetchRates = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(READ_API, {
-        method: "GET",
-        headers: { "x-pickup-portal-token": SECURITY_TOKEN },
-      });
+      const response = await fetch(PRICING_API, { method: "GET" });
       if (!response.ok)
         throw new Error(
           `Error ${response.status}: Failed to fetch rate sheets.`,
@@ -99,12 +86,9 @@ export default function PricingPage() {
 
     setIsAdding(true);
     try {
-      const response = await fetch(WRITE_API, {
+      const response = await fetch(PRICING_API, {
         method: "POST",
-        headers: {
-          "x-pickup-portal-token": SECURITY_TOKEN,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "add", item_name: name, rate }),
       });
 
@@ -141,12 +125,9 @@ export default function PricingPage() {
 
     setIsSaving(true);
     try {
-      const response = await fetch(WRITE_API, {
+      const response = await fetch(PRICING_API, {
         method: "POST",
-        headers: {
-          "x-pickup-portal-token": SECURITY_TOKEN,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "update", id, item_name: name, rate }),
       });
 
@@ -172,12 +153,9 @@ export default function PricingPage() {
     )
       return;
     try {
-      const response = await fetch(WRITE_API, {
+      const response = await fetch(PRICING_API, {
         method: "POST",
-        headers: {
-          "x-pickup-portal-token": SECURITY_TOKEN,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", id }),
       });
       if (!response.ok) throw new Error("Deletion failed on server.");

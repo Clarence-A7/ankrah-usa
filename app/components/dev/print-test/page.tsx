@@ -8,6 +8,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { notFound } from "next/navigation";
 import {
   buildItemLabelBytes,
   type PrintableItemLabel,
@@ -46,6 +47,9 @@ async function printToMockTransport(
 }
 
 export default function PrintTestPage() {
+  // Dev-only diagnostic route — never expose in production.
+  if (process.env.NODE_ENV === "production") notFound();
+
   const [printedBytesList, setPrintedBytesList] = useState<Uint8Array[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [isPrinting, setIsPrinting] = useState(false);

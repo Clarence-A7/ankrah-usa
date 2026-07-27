@@ -12,6 +12,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { notFound } from "next/navigation";
 import { decodeEscPosBytes } from "../../lib/escpos-mock-printer";
 import { EscPosMockReceipt } from "../../components/dev/EscPosMockReceipt";
 import {
@@ -28,6 +29,9 @@ interface JobState {
 }
 
 export default function PrintTestPage() {
+  // Dev-only diagnostic route — never expose in production.
+  if (process.env.NODE_ENV === "production") notFound();
+
   const [job, setJob] = useState<JobState | null>(null);
   // Tracks elapsed-time display without re-deriving it from scratch each render.
   const startedAtRef = useRef<number | null>(null);
