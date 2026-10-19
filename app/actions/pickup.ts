@@ -163,3 +163,100 @@ where: {
     return { success: false, error: "Failed to assign driver to invoices." };
   }
 }
+
+// ── Admin pickup scheduling ────────────────────────────────────────────────
+// An admin sets/updates the first-mile pickup date & time on a paid order that
+// is awaiting (or dispatched for) pickup. Every (re)schedule is appended to
+// StatusHistory — never a silent overwrite. AuthN/AuthZ enforced here, not just
+// in middleware. The live invoice.status is left unchanged (scheduling is
+// orthogonal to the pickup pipeline position).
+
+const SCHEDULABLE_STATUSES = ["Ready For Pickup", "Pending Pickup"];
+
+const SchedulePickupSchema = z.object({
+  invoiceId: z.string().trim().min(1).max(64),
+  // ISO 8601 (the modal sends new Date(localValue).toISOString()); accepts a
+  // bare "YYYY-MM-DDThh:mm" too. Past/sane-range checks are done below.
+  scheduledAt: z
+    .string()
+    .trim()
+    .max(40)
+    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/),
+});
+
+export async function schedulePickup(
+  invoiceId: string,
+  scheduledAt: string,
+): Promise<{ success: boolean; error?: string; scheduledPickupAt?: string }> {
+  // 1. AuthN + AuthZ
+  const session = await getSession();
+  if (!session?.userId) {
+    return { success: false, error: "Not authenticated." };
+  }
+  if (!ALLOWED_ROLES.includes(session.role)) {
+    return { success: false, error: "Not authorized to schedule pickups." };
+  }
+
+  // 2. Input validation (shape) + explicit future/sane-range (semantics)
+  const parsed = SchedulePickupSchema.safeParse({ invoiceId, scheduledAt });
+  if (!parsed.success) {
+    return { success: false, error: "Invalid pickup date/time." };
+  }
+  const when = new Date(parsed.data.scheduledAt);
+  const now = new Date();
+  const oneYearOut = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+  if (
+    Number.isNaN(when.getTime()) ||
+    when.getTime() <= now.getTime() ||
+    when.getTime() > oneYearOut.getTime()
+  ) {
+    return {
+      success: false,
+      error: "Pickup must be a future date within the next year.",
+    };
+  }
+
+  try {
+    const invoice = await db.invoice.findUnique({
+      where: { id: parsed.data.invoiceId },
+      select: { id: true, status: true, scheduledPickupAt: true },
+    });
+    if (!invoice) {
+      return { success: false, error: "Order not found." };
+    }
+    if (!SCHEDULABLE_STATUSES.includes(invoice.status)) {
+      return { success: false, error: "This order is not awaiting pickup." };
+    }
+
+    const isReschedule = invoice.scheduledPickupAt != null;
+    // Compact audit label — StatusHistory.status is VarChar(50).
+    const stamp = when.toISOString().slice(0, 16).replace("T", " "); // YYYY-MM-DD HH:mm (UTC)
+    const auditStatus =
+      `${isReschedule ? "Pickup rescheduled" : "Pickup scheduled"}: ${stamp}`.slice(0, 50);
+
+    await db.$transaction(async (tx) => {
+      await tx.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          scheduledPickupAt: when,
+          scheduledPickupBy: session.userId,
+          scheduledPickupSetAt: now,
+        },
+      });
+      await tx.statusHistory.create({
+        data: {
+          id: crypto.randomUUID(),
+          invoiceId: invoice.id,
+          status: auditStatus,
+          changedById: session.userId,
+          createdAt: now,
+        },
+      });
+    });
+
+    return { success: true, scheduledPickupAt: when.toISOString() };
+  } catch (error) {
+    console.error("schedulePickup failed:", error); // detail server-side only
+    return { success: false, error: "Failed to schedule pickup." };
+  }
+}

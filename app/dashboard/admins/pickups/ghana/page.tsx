@@ -43,6 +43,9 @@ async function getInvoicesManifest() {
       })),
       createdAt: invoice.createdAt.toISOString(),
       updatedAt: invoice.updatedAt.toISOString(),
+      scheduledPickupAt: invoice.scheduledPickupAt
+        ? invoice.scheduledPickupAt.toISOString()
+        : null,
       driverName: invoice.pickupDriver
         ? (driverNameByStaffId.get(invoice.pickupDriver) ??
           invoice.pickupDriver)

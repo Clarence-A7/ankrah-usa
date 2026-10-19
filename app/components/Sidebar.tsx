@@ -286,7 +286,7 @@ export const Sidebar: React.FC = () => {
       name: "Settings",
       icon: Settings,
       href: "/dashboard/settings",
-      roles: ["origin_admin", "super_admin"],
+      roles: ["super_admin"],
     },
   ];
 

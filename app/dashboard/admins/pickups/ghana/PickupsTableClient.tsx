@@ -9,8 +9,21 @@ import { InvoiceDetailsModal } from "../../../../components/InvoiceDetailsModal"
 import { DispatchDriverModal } from "../../../../components/DispatchDriverModal";
 import PrintInvoiceQRModal from "../../../../components/PrintInvoiceQRModal";
 import MarkReceivedConfirmModal from "../../../../components/MarkReceivedConfirmModal";
+import { SchedulePickupModal } from "../../../../components/SchedulePickupModal";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
-import { Ship, Plane, Printer, PackageCheck } from "lucide-react";
+import { Ship, Plane, Printer, PackageCheck, CalendarClock } from "lucide-react";
+
+function formatScheduledPickup(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 // Mirrors the INVOICE_STATUS_PIPELINE / "at least" matching pattern your
 // project notes describe as needing consolidation into a shared
@@ -103,6 +116,7 @@ export default function PickupsTableClient({
   const [receiveTargets, setReceiveTargets] = useState<ReceiveTarget[] | null>(
     null,
   );
+  const [scheduleTarget, setScheduleTarget] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<StatusKey>(STATUS_TABS[0].key);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -120,7 +134,8 @@ export default function PickupsTableClient({
       !dispatchTargetIds &&
       !reassignTargetIds &&
       !qrPrintTargets &&
-      !receiveTargets,
+      !receiveTargets &&
+      !scheduleTarget,
   });
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -227,6 +242,13 @@ export default function PickupsTableClient({
     router.refresh();
   };
 
+  const handleSchedule = (row: any) => setScheduleTarget(row);
+
+  const handleScheduled = () => {
+    setScheduleTarget(null);
+    router.refresh();
+  };
+
   const handlePrintLabel = (row: any) => {
     setQrPrintTargets([
       { invoiceNumber: row.invoiceNumber, items: row.items || [] },
@@ -326,6 +348,13 @@ export default function PickupsTableClient({
   // wrong for most rows shown, so Status replaces Action there instead.
   const showStatusColumn = isSearching || activeTab === "Received At Origin";
 
+  // Scheduled-pickup is only meaningful pre-collection (Ready / Dispatched),
+  // and during a cross-status search.
+  const showScheduleColumn =
+    isSearching ||
+    activeTab === "Ready For Pickup" ||
+    activeTab === "Pending Pickup";
+
   const columns = [
     {
       header: (
@@ -419,6 +448,23 @@ export default function PickupsTableClient({
           },
         ]
       : []),
+    ...(showScheduleColumn
+      ? [
+          {
+            header: "Scheduled Pickup",
+            render: (row: any) => (
+              <span
+                style={{
+                  fontSize: "0.8125rem",
+                  color: row.scheduledPickupAt ? "#0f172a" : "#9ca3af",
+                }}
+              >
+                {formatScheduledPickup(row.scheduledPickupAt)}
+              </span>
+            ),
+          },
+        ]
+      : []),
     {
       header: showStatusColumn ? "Status" : "Action",
       render: (row: any) => {
@@ -449,21 +495,39 @@ export default function PickupsTableClient({
         }
         if (row.status === "Pending Pickup") {
           return (
-            <Button
-              className={styles.actionBtn}
-              onClick={() => handleEditDriver(row.id)}
-            >
-              Edit Driver
-            </Button>
+            <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap" }}>
+              <Button
+                className={styles.actionBtn}
+                onClick={() => handleEditDriver(row.id)}
+              >
+                Edit Driver
+              </Button>
+              <Button
+                className={styles.actionBtn}
+                onClick={() => handleSchedule(row)}
+              >
+                <CalendarClock size={14} style={{ marginRight: "0.25rem" }} />
+                {row.scheduledPickupAt ? "Reschedule" : "Schedule"}
+              </Button>
+            </div>
           );
         }
         return (
-          <Button
-            className={styles.actionBtn}
-            onClick={() => handleDispatchShipment(row.id)}
-          >
-            Dispatch
-          </Button>
+          <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap" }}>
+            <Button
+              className={styles.actionBtn}
+              onClick={() => handleDispatchShipment(row.id)}
+            >
+              Dispatch
+            </Button>
+            <Button
+              className={styles.actionBtn}
+              onClick={() => handleSchedule(row)}
+            >
+              <CalendarClock size={14} style={{ marginRight: "0.25rem" }} />
+              {row.scheduledPickupAt ? "Reschedule" : "Schedule"}
+            </Button>
+          </div>
         );
       },
     },
@@ -647,6 +711,15 @@ export default function PickupsTableClient({
         targets={receiveTargets || []}
         onClose={() => setReceiveTargets(null)}
         onReceived={handleReceived}
+      />
+
+      <SchedulePickupModal
+        isOpen={scheduleTarget !== null}
+        invoiceId={scheduleTarget?.id ?? null}
+        invoiceNumber={scheduleTarget?.invoiceNumber}
+        currentScheduledAt={scheduleTarget?.scheduledPickupAt ?? null}
+        onClose={() => setScheduleTarget(null)}
+        onScheduled={handleScheduled}
       />
     </>
   );

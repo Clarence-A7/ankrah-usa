@@ -1,11 +1,13 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../laragon/www/localankrah"
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../laragon/www/localankrah",
+    },
+  ],
+  "settings": {
+    "liveServer.settings.multiRootWorkspaceName": "localankrah",
+  },
 }

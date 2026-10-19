@@ -69,6 +69,12 @@ model Invoice {
   deliveredAt     DateTime?
   deliveryDriver  String?         @db.VarChar(50)
   dispatchedAt    DateTime?
+  // First-mile pickup scheduling (admin-set). scheduledPickupBy = users.id of
+  // the admin who last set it; scheduledPickupSetAt = when it was last set.
+  // Changes are also appended to StatusHistory for a full audit trail.
+  scheduledPickupAt    DateTime?
+  scheduledPickupBy    String?    @db.VarChar(50)
+  scheduledPickupSetAt DateTime?
   pickupCity      String?         @db.VarChar(100)
   pickupDriver    String?         @db.VarChar(50)
   pickupState     String?         @db.VarChar(100)
@@ -234,6 +240,49 @@ model password_reset_tokens {
 
   @@index([tokenHash])
   @@index([subjectType, subjectId])
+}
+
+// Service pickup zones (single company). `states` is a JSON array of 2-letter
+// US state/region codes, e.g. ["PA","NY","DC","MD","VA"]. Expansion is a data
+// change — flip isActive or edit states, no code change. Read by the PHP wizard
+// endpoints (zone_info/pickup_quote/pickup) and manageable from the admin app.
+model zones {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100)
+  states    Json
+  isActive  Boolean  @default(true)
+  // Distance surcharge for pickups in this zone: the first `freeMiles` driving
+  // miles from the hub are included in the base price; beyond that, `perMile`
+  // USD per mile. Defaults match the former global rule (20 mi free, $2/mi).
+  freeMiles Decimal  @default(20) @db.Decimal(6, 1)
+  perMile   Decimal  @default(2.00) @db.Decimal(8, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Global key/value config editable from the admin Settings page and readable
+/// by the PHP pickup endpoints (shared DB). Currently holds the pickup hub
+/// origin (`hub_address`, `hub_lat`, `hub_lng`) used for the distance surcharge.
+model app_settings {
+  key       String   @id @db.VarChar(64)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+// Out-of-zone demand capture from the public wizard. Public, unauthenticated
+// input — PHP validates/escapes before insert. No companyId (single tenant).
+model waitlist_signups {
+  id              String   @id @default(uuid())
+  email           String?  @db.VarChar(255)
+  phone           String?  @db.VarChar(30)
+  rawAddress      String?  @db.VarChar(255)
+  state           String?  @db.VarChar(2)
+  zip             String?  @db.VarChar(20)
+  zoneCheckResult String?  @db.VarChar(50)
+  submittedAt     DateTime @default(now())
+
+  @@index([submittedAt])
+  @@index([state])
 }
 
 enum UserRole {
