@@ -32,9 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but DO track the committed config contract:
+!.env.example
 
 # vercel
 .vercel
+
+# claude code local/machine settings
+.claude/settings.local.json
+.claude/launch.json
 
 # typescript
 *.tsbuildinfo
