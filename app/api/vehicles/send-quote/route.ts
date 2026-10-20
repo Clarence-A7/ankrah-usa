@@ -89,6 +89,11 @@ export async function POST(request: NextRequest) {
   const depositAmount = Math.round(quotedAmount * DEPOSIT_RATE * 100) / 100;
   const balanceAmount = Math.round((quotedAmount - depositAmount) * 100) / 100;
 
+  // Only registered customers (logged in when they submitted the request) may
+  // pay the 60% deposit; guests are offered full payment only.
+  const isRegistered =
+    !!vehicleRequest.customerCode && vehicleRequest.customerCode !== "GUEST";
+
   const successUrl =
     process.env.VEHICLE_PAYMENT_RETURN_URL ||
     `${process.env.PHP_SITE_BASE_URL || "http://localhost/localankrah"}/vehicle-payment-success.html?session_id={CHECKOUT_SESSION_ID}`;
@@ -173,10 +178,13 @@ export async function POST(request: NextRequest) {
     });
 
   let fullSession: Stripe.Checkout.Session;
-  let depositSession: Stripe.Checkout.Session;
+  let depositSession: Stripe.Checkout.Session | null = null;
   try {
     fullSession = await createVehicleCheckout("full", quotedAmount, 0);
-    depositSession = await createVehicleCheckout("deposit", depositAmount, balanceAmount);
+    // Deposit link is created only for registered customers.
+    if (isRegistered) {
+      depositSession = await createVehicleCheckout("deposit", depositAmount, balanceAmount);
+    }
   } catch (err: any) {
     return NextResponse.json(
       { error: `Stripe session creation failed: ${err.message}` },
@@ -242,11 +250,12 @@ export async function POST(request: NextRequest) {
           <p style="text-align: center; margin: 0 0 8px;">
             <a href="${fullSession.url}" style="display:inline-block;background-color:#2e63af;color:#ffffff;text-decoration:none;padding:12px 28px;font-weight:bold;border-radius:8px;">Pay Full Amount &mdash; $${formattedAmount}</a>
           </p>
+          ${depositSession ? `
           <p style="text-align: center; color:#94a3b8; font-size:0.85rem; margin: 6px 0;">&mdash; or &mdash;</p>
           <p style="text-align: center; margin: 0;">
             <a href="${depositSession.url}" style="display:inline-block;background-color:#ffffff;color:#2e63af;text-decoration:none;padding:11px 26px;font-weight:bold;border-radius:8px;border:2px solid #2e63af;">Pay 60% Deposit &mdash; $${formattedDeposit}</a>
           </p>
-          <p style="text-align: center; color:#475569; font-size:0.82rem; margin: 10px 0 0;">Choose the deposit to reserve your shipment now &mdash; the remaining <strong>$${formattedBalance} (40%)</strong> is due upon arrival of your vehicle at the destination port.</p>
+          <p style="text-align: center; color:#475569; font-size:0.82rem; margin: 10px 0 0;">Choose the deposit to reserve your shipment now &mdash; the remaining <strong>$${formattedBalance} (40%)</strong> is due upon arrival of your vehicle at the destination port.</p>` : ""}
           <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 14px 18px; margin: 24px 0; font-size: 0.82rem; color: #92400e; line-height: 1.6;">
             <strong>What this quote covers:</strong> This price covers ocean freight for
             your vehicle from our origin yard to the port of destination in Ghana only.
@@ -281,7 +290,7 @@ export async function POST(request: NextRequest) {
       quotedById: session.id,
       status: "quoted",
       stripeSessionId: fullSession.id,
-      stripeDepositSessionId: depositSession.id,
+      stripeDepositSessionId: depositSession?.id ?? null,
     },
   });
 
@@ -289,7 +298,7 @@ export async function POST(request: NextRequest) {
     success: true,
     invoiceNumber,
     stripeSessionUrl: fullSession.url,
-    depositSessionUrl: depositSession.url,
+    depositSessionUrl: depositSession?.url ?? null,
     emailSent,
     isEdit,
   });
