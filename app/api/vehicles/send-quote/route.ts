@@ -83,71 +83,100 @@ export async function POST(request: NextRequest) {
   const vehicleDescription =
     `${vehicleRequest.vehicleYear} ${vehicleRequest.vehicleMake} ${vehicleRequest.vehicleModel}`.trim();
 
-  // 1. Invalidate the previous Stripe Checkout session, if this is an edit.
-  // Without this, a customer who already received the first email could
-  // still click the old Pay Now link and pay the stale amount even after
-  // staff corrected the quote. Failure to expire (already paid/expired/
-  // completed) is logged but non-fatal -- we still want the corrected
-  // quote to go out.
-  if (isEdit && vehicleRequest.stripeSessionId) {
-    try {
-      await stripe.checkout.sessions.expire(vehicleRequest.stripeSessionId);
-    } catch (err: any) {
-      console.warn(
-        `Could not expire prior Stripe session ${vehicleRequest.stripeSessionId} for ${vehicleRequest.referenceNumber}:`,
-        err.message,
-      );
+  // 60% deposit option: customer pays 60% up front; the remaining 40% is due
+  // on arrival of the vehicle at the destination port.
+  const DEPOSIT_RATE = 0.6;
+  const depositAmount = Math.round(quotedAmount * DEPOSIT_RATE * 100) / 100;
+  const balanceAmount = Math.round((quotedAmount - depositAmount) * 100) / 100;
+
+  const successUrl =
+    process.env.VEHICLE_PAYMENT_RETURN_URL ||
+    `${process.env.PHP_SITE_BASE_URL || "http://localhost/localankrah"}/vehicle-payment-success.html?session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl =
+    process.env.VEHICLE_PAYMENT_CANCEL_URL ||
+    `${process.env.PHP_SITE_BASE_URL || "http://localhost/localankrah"}/vehicle-quote.html#cancelled`;
+
+  // 1. On a re-quote, void BOTH previous payment links (full + deposit) so a
+  // customer can't pay a stale amount through either one.
+  if (isEdit) {
+    for (const sid of [vehicleRequest.stripeSessionId, vehicleRequest.stripeDepositSessionId]) {
+      if (!sid) continue;
+      try {
+        await stripe.checkout.sessions.expire(sid);
+      } catch (err: any) {
+        console.warn(
+          `Could not expire prior Stripe session ${sid} for ${vehicleRequest.referenceNumber}:`,
+          err.message,
+        );
+      }
     }
   }
 
-  // 2. Stripe Checkout session (new, for the corrected or first-time amount)
-  let checkoutSession: Stripe.Checkout.Session;
-  try {
-    checkoutSession = await stripe.checkout.sessions.create({
+  // 2. Two Checkout sessions for the same invoice: pay in full, or a 60%
+  // deposit. The customer uses whichever link they choose; once one is paid,
+  // confirm-vehicle-payment.php voids the sibling so they can't pay twice.
+  // metadata.quotedTotal = the full quote; amountPaid = what THIS link charges.
+  // Stripe's amount_total stays authoritative for the money at confirm time.
+  const createVehicleCheckout = (
+    plan: "full" | "deposit",
+    chargeAmount: number,
+    balance: number,
+  ): Promise<Stripe.Checkout.Session> =>
+    stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      customer_email: vehicleRequest.requesterEmail,
+      customer_email: vehicleRequest!.requesterEmail,
       line_items: [
         {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Vehicle Shipment Payment - Invoice #${invoiceNumber}`,
-              description: `${vehicleDescription} (VIN: ${vehicleRequest.vin}) - freight to ${vehicleRequest.destinationCity}`,
+              name:
+                plan === "deposit"
+                  ? `Vehicle Shipment - 60% Deposit - Invoice #${invoiceNumber}`
+                  : `Vehicle Shipment Payment - Invoice #${invoiceNumber}`,
+              description:
+                `${vehicleDescription} (VIN: ${vehicleRequest!.vin}) - freight to ${vehicleRequest!.destinationCity}` +
+                (plan === "deposit"
+                  ? ` - remaining $${balance.toFixed(2)} due on arrival at destination port`
+                  : ""),
             },
-            unit_amount: Math.round(quotedAmount * 100),
+            unit_amount: Math.round(chargeAmount * 100),
           },
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url:
-        process.env.VEHICLE_PAYMENT_RETURN_URL ||
-        `${process.env.PHP_SITE_BASE_URL || "http://localhost/localankrah"}/vehicle-payment-success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:
-        process.env.VEHICLE_PAYMENT_CANCEL_URL ||
-        `${process.env.PHP_SITE_BASE_URL || "http://localhost/localankrah"}/vehicle-quote.html#cancelled`,
-      // Stripe metadata values must be strings -- numbers are cast explicitly.
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         source: "vehicle_quote",
-        vehicleQuoteRefNum: vehicleRequest.referenceNumber,
+        vehicleQuoteRefNum: vehicleRequest!.referenceNumber,
         invoiceNumber,
+        paymentPlan: plan,
+        quotedTotal: String(quotedAmount),
         amountDue: String(quotedAmount),
-        amountPaid: String(quotedAmount),
-        balanceDue: "0",
-        consignerName: vehicleRequest.requesterName,
-        consignerEmail: vehicleRequest.requesterEmail,
-        consignerPhone: vehicleRequest.requesterPhone,
-        destinationCity: vehicleRequest.destinationCity,
-        pickupStreet: vehicleRequest.pickupStreet,
-        pickupCity: vehicleRequest.pickupCity,
+        amountPaid: String(chargeAmount),
+        balanceDue: String(balance),
+        consignerName: vehicleRequest!.requesterName,
+        consignerEmail: vehicleRequest!.requesterEmail,
+        consignerPhone: vehicleRequest!.requesterPhone,
+        destinationCity: vehicleRequest!.destinationCity,
+        pickupStreet: vehicleRequest!.pickupStreet,
+        pickupCity: vehicleRequest!.pickupCity,
         pickupState: cleanState,
-        pickupZip: vehicleRequest.pickupZip,
-        vehicleYear: String(vehicleRequest.vehicleYear),
-        vehicleMake: vehicleRequest.vehicleMake,
-        vehicleModel: vehicleRequest.vehicleModel,
-        vin: vehicleRequest.vin,
+        pickupZip: vehicleRequest!.pickupZip,
+        vehicleYear: String(vehicleRequest!.vehicleYear),
+        vehicleMake: vehicleRequest!.vehicleMake,
+        vehicleModel: vehicleRequest!.vehicleModel,
+        vin: vehicleRequest!.vin,
       },
     });
+
+  let fullSession: Stripe.Checkout.Session;
+  let depositSession: Stripe.Checkout.Session;
+  try {
+    fullSession = await createVehicleCheckout("full", quotedAmount, 0);
+    depositSession = await createVehicleCheckout("deposit", depositAmount, balanceAmount);
   } catch (err: any) {
     return NextResponse.json(
       { error: `Stripe session creation failed: ${err.message}` },
@@ -171,10 +200,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const formattedAmount = quotedAmount.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    const fmt2 = (n: number) =>
+      n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formattedAmount = fmt2(quotedAmount);
+    const formattedDeposit = fmt2(depositAmount);
+    const formattedBalance = fmt2(balanceAmount);
 
     const introLine = isEdit
       ? `We've updated your quote for your ${vehicleDescription} (VIN: ${vehicleRequest.vin}). Your revised quote is below -- please use the new Pay Now link, as any previous payment link for this request is no longer valid.`
@@ -206,10 +236,17 @@ export async function POST(request: NextRequest) {
           <p>Hi ${vehicleRequest.requesterName},</p>
           <p>${introLine}</p>
           <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0; text-align: center;">
-            <div style="font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Total Amount Due</div>
+            <div style="font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Total Amount</div>
             <div style="font-size: 1.8rem; font-weight: 700; color: #0f172a;">$${formattedAmount} USD</div>
           </div>
-          <p style="text-align: center;"><a href="${checkoutSession.url}" style="display:inline-block;background-color:#2e63af;color:#ffffff;text-decoration:none;padding:12px 28px;font-weight:bold;border-radius:8px;">Pay Now</a></p>
+          <p style="text-align: center; margin: 0 0 8px;">
+            <a href="${fullSession.url}" style="display:inline-block;background-color:#2e63af;color:#ffffff;text-decoration:none;padding:12px 28px;font-weight:bold;border-radius:8px;">Pay Full Amount &mdash; $${formattedAmount}</a>
+          </p>
+          <p style="text-align: center; color:#94a3b8; font-size:0.85rem; margin: 6px 0;">&mdash; or &mdash;</p>
+          <p style="text-align: center; margin: 0;">
+            <a href="${depositSession.url}" style="display:inline-block;background-color:#ffffff;color:#2e63af;text-decoration:none;padding:11px 26px;font-weight:bold;border-radius:8px;border:2px solid #2e63af;">Pay 60% Deposit &mdash; $${formattedDeposit}</a>
+          </p>
+          <p style="text-align: center; color:#475569; font-size:0.82rem; margin: 10px 0 0;">Choose the deposit to reserve your shipment now &mdash; the remaining <strong>$${formattedBalance} (40%)</strong> is due upon arrival of your vehicle at the destination port.</p>
           <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 14px 18px; margin: 24px 0; font-size: 0.82rem; color: #92400e; line-height: 1.6;">
             <strong>What this quote covers:</strong> This price covers ocean freight for
             your vehicle from our origin yard to the port of destination in Ghana only.
@@ -243,14 +280,16 @@ export async function POST(request: NextRequest) {
       quotedAt: new Date(),
       quotedById: session.id,
       status: "quoted",
-      stripeSessionId: checkoutSession.id,
+      stripeSessionId: fullSession.id,
+      stripeDepositSessionId: depositSession.id,
     },
   });
 
   return NextResponse.json({
     success: true,
     invoiceNumber,
-    stripeSessionUrl: checkoutSession.url,
+    stripeSessionUrl: fullSession.url,
+    depositSessionUrl: depositSession.url,
     emailSent,
     isEdit,
   });

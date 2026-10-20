@@ -180,6 +180,7 @@ model VehicleQuoteRequest {
   createdAt           DateTime           @default(now()) @db.DateTime(0)
   updatedAt           DateTime           @default(now()) @updatedAt @db.DateTime(0)
   stripeSessionId     String?            @db.VarChar(255)
+  stripeDepositSessionId String?         @db.VarChar(255)
 
   @@index([createdAt], map: "idx_created_at")
   @@index([status], map: "idx_status")
