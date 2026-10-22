@@ -2,9 +2,11 @@ import React from "react";
 import { getCurrentUserSession } from "@/app/actions/auth";
 import styles from "../styles/dashboard.module.css";
 import { getZones } from "@/app/actions/zones";
-import { getCompanyHub } from "@/app/actions/settings";
+import { getCompanyHub, getTaxSettings, getDiscountSettings } from "@/app/actions/settings";
 import ZonesManager from "./ZonesManager";
 import HubManager from "./HubManager";
+import TaxManager from "./TaxManager";
+import DiscountManager from "./DiscountManager";
 
 export default async function SettingsPage() {
   const session = await getCurrentUserSession();
@@ -27,11 +29,18 @@ export default async function SettingsPage() {
     );
   }
 
-  const [zones, hub] = await Promise.all([getZones(), getCompanyHub()]);
+  const [zones, hub, tax, discount] = await Promise.all([
+    getZones(),
+    getCompanyHub(),
+    getTaxSettings(),
+    getDiscountSettings(),
+  ]);
 
   return (
     <div className={styles.container}>
       <HubManager initialHub={hub} />
+      <TaxManager initialTax={tax} />
+      <DiscountManager initialDiscount={discount} />
       <ZonesManager initialZones={zones} />
     </div>
   );

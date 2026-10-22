@@ -53,10 +53,9 @@ export default function HubManager({ initialHub }: { initialHub: CompanyHub }) {
         <MapPin size={22} /> Settings · Company Hub
       </h1>
       <p style={{ color: "#64748b", fontSize: "0.9rem", margin: "0 0 1.25rem", maxWidth: 640 }}>
-        The pickup origin. The distance surcharge measures driving miles from here to
-        each customer&apos;s address, so update it whenever the company relocates. A
-        server Google Maps key (<code>GOOGLE_MAPS_SERVER_KEY</code> in the API{" "}
-        <code>.env</code>) is still required for the mileage lookup.
+        The pickup origin. The distance surcharge measures miles from here to each
+        customer&apos;s address, so update it whenever the company relocates. Distance
+        is estimated from free address lookups — no map API key needed.
       </p>
 
       {banner && (
