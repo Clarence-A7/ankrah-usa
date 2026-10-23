@@ -86,6 +86,7 @@ model Invoice {
   container       Container?      @relation(fields: [containerId], references: [id], onDelete: Cascade)
   items           ManifestItem[]
   statusHistory   StatusHistory[]
+  deliveryProof   DeliveryProof?
 
   @@index([containerId], map: "invoices_containerId_fkey")
   @@index([deliveryDriver])
@@ -149,6 +150,20 @@ model StatusHistory {
   @@index([invoiceId], map: "idx_statusHistory_invoice")
   @@index([invoiceId, createdAt], map: "idx_statusHistory_invoice_created")
   @@map("statushistory")
+}
+
+// Proof of delivery: one photo per delivered shipment, captured by the
+// destination driver. Base64 data URI (compressed client-side) kept out of the
+// invoices row so list queries stay lean; loaded on demand when an admin views it.
+model DeliveryProof {
+  id         String   @id @default(uuid())
+  invoiceId  String   @unique
+  photo      String   @db.MediumText
+  capturedAt DateTime @default(now())
+  capturedBy String?  @db.VarChar(50)
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_proofs")
 }
 
 model VehicleQuoteRequest {

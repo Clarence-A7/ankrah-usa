@@ -73,6 +73,19 @@ export default async function DeliveriesPage() {
     }
   }
 
+  // 4b. Proof-of-delivery existence. Best-effort: a not-yet-created
+  //     delivery_proofs table must never break the deliveries dashboard.
+  const podByInvoice = new Map<string, string>();
+  try {
+    const proofs = await db.deliveryProof.findMany({
+      where: { invoiceId: { in: invoices.map((i) => i.id) } },
+      select: { invoiceId: true, capturedAt: true },
+    });
+    for (const p of proofs) podByInvoice.set(p.invoiceId, p.capturedAt.toISOString());
+  } catch (e) {
+    console.error("POD lookup failed (delivery_proofs table may not exist yet):", e);
+  }
+
   // 5. Serialize for the client boundary:
   //    - Prisma Decimal -> number (avoids the string "0" !== 0 bug)
   //    - Date -> ISO string
@@ -93,6 +106,8 @@ export default async function DeliveriesPage() {
       : null,
     status: inv.status,
     updatedAt: inv.updatedAt?.toISOString() ?? null,
+    hasPod: podByInvoice.has(inv.id),
+    podCapturedAt: podByInvoice.get(inv.id) ?? null,
   }));
 
   return <DeliveryTableClient invoicesData={invoicesData} />;

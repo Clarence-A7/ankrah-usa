@@ -8,7 +8,8 @@ import styles from "../../styles/dashboard.module.css";
 import { InvoiceDetailsModal } from "../../../components/InvoiceDetailsModal";
 import { DispatchDriverModal } from "../../../components/DesDriverDispatchModal";
 import { useAutoRefresh } from "@/app/lib/hooks/useAutoRefresh";
-import { Ship, Plane } from "lucide-react";
+import { Ship, Plane, Camera } from "lucide-react";
+import PodViewerModal from "../../../components/PodViewerModal";
 
 // Each tab can cover more than one status; "Ready" holds everything
 // physically at the hub, whether newly received or returned by a driver.
@@ -42,6 +43,7 @@ export default function DeliveryTableClient({
   // Track selected rows by database ID for easy table checkbox matching
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
+  const [podTarget, setPodTarget] = useState<{ id: string; invoiceNumber: string } | null>(null);
 
   // Explicitly collect Invoice Numbers to send to the Dispatch modal
   const [dispatchTargetNumbers, setDispatchTargetNumbers] = useState<
@@ -282,6 +284,22 @@ export default function DeliveryTableClient({
     },
     { header: "Driver", render: (row: any) => row.driverName || "N/D" },
     {
+      header: "POD",
+      render: (row: any) =>
+        row.hasPod ? (
+          <button
+            className={styles.linkButton}
+            onClick={() => setPodTarget({ id: row.id, invoiceNumber: row.invoiceNumber })}
+            title="View proof of delivery"
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
+          >
+            <Camera size={15} /> View
+          </button>
+        ) : (
+          <span className="text-gray-400 text-xs">—</span>
+        ),
+    },
+    {
       header: "Action",
       render: (row: any) => {
         // Dispatched: allow changing the assigned driver or returning to hub
@@ -459,6 +477,14 @@ export default function DeliveryTableClient({
         mode="reassign"
         onClose={() => setReassignTargetNumbers(null)}
         onDispatched={handleReassigned}
+      />
+
+      {/* View proof-of-delivery photo for a delivered shipment */}
+      <PodViewerModal
+        isOpen={podTarget !== null}
+        shipmentId={podTarget?.id ?? null}
+        invoiceNumber={podTarget?.invoiceNumber ?? ""}
+        onClose={() => setPodTarget(null)}
       />
     </>
   );
