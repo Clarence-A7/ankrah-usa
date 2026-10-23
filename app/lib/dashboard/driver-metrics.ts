@@ -193,6 +193,8 @@ export interface OriginDriverMetrics {
     status: string;
     pickupCity: string | null;
     pickupStreet: string | null;
+    fullAddress: string;
+    phone: string | null;
     updatedAt: string;
   }[];
 }
@@ -210,6 +212,8 @@ export interface DestinationDriverMetrics {
     invoiceNumber: string;
     status: string;
     destinationCity: string;
+    fullAddress: string;
+    phone: string | null;
     updatedAt: string;
   }[];
 }
@@ -267,6 +271,9 @@ export async function getOriginDriverMetrics(staffId: string): Promise<OriginDri
         status: true,
         pickupCity: true,
         pickupStreet: true,
+        pickupState: true,
+        pickupZip: true,
+        consignerPhone: true,
         updatedAt: true,
       },
     }),
@@ -286,6 +293,10 @@ export async function getOriginDriverMetrics(staffId: string): Promise<OriginDri
       status: s.status,
       pickupCity: s.pickupCity,
       pickupStreet: s.pickupStreet,
+      fullAddress: [s.pickupStreet, s.pickupCity, s.pickupState, s.pickupZip]
+        .filter(Boolean)
+        .join(", "),
+      phone: s.consignerPhone ?? null,
       updatedAt: s.updatedAt.toISOString(),
     })),
   };
@@ -339,6 +350,7 @@ export async function getDestinationDriverMetrics(
         invoiceNumber: true,
         status: true,
         destinationCity: true,
+        consigneePhone: true,
         updatedAt: true,
       },
     }),
@@ -357,6 +369,8 @@ export async function getDestinationDriverMetrics(
       invoiceNumber: s.invoiceNumber,
       status: s.status,
       destinationCity: s.destinationCity,
+      fullAddress: s.destinationCity ?? "",
+      phone: s.consigneePhone ?? null,
       updatedAt: s.updatedAt.toISOString(),
     })),
   };
