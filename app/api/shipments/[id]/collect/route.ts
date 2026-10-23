@@ -74,11 +74,21 @@ export async function PATCH(
     );
   }
 
-  const updated = await db.invoice.update({
-    where: { id: shipmentId },
-    data: { status: "COLLECTED" },
-    select: { id: true, status: true },
-  });
+  // Store the canonical title-case status ("Collected"), not "COLLECTED" — the
+  // admin Pickups tabs and the mark-received action match on the exact string in
+  // statuses.ts, so the wrong case made collected shipments vanish from the queue.
+  // Also record the transition in statushistory (feeds the driver trend + the
+  // customer tracking timeline).
+  const [updated] = await db.$transaction([
+    db.invoice.update({
+      where: { id: shipmentId },
+      data: { status: "Collected" },
+      select: { id: true, status: true },
+    }),
+    db.statusHistory.create({
+      data: { invoiceId: shipmentId, status: "Collected", changedById: session.id },
+    }),
+  ]);
 
   return NextResponse.json({ id: updated.id, status: updated.status });
 }
