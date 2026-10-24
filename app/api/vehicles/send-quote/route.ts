@@ -94,12 +94,16 @@ export async function POST(request: NextRequest) {
   const isRegistered =
     !!vehicleRequest.customerCode && vehicleRequest.customerCode !== "GUEST";
 
+  // Default to the live PHP site so the Stripe return never lands on localhost
+  // in production. Override per-environment with VEHICLE_PAYMENT_RETURN_URL /
+  // PHP_SITE_BASE_URL (e.g. http://localhost/localankrah for local dev).
+  const phpSiteBaseUrl = process.env.PHP_SITE_BASE_URL || "https://ankrahfl.com";
   const successUrl =
     process.env.VEHICLE_PAYMENT_RETURN_URL ||
-    `${process.env.PHP_SITE_BASE_URL || "http://localhost/localankrah"}/vehicle-payment-success.html?session_id={CHECKOUT_SESSION_ID}`;
+    `${phpSiteBaseUrl}/vehicle-payment-success.html?session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl =
     process.env.VEHICLE_PAYMENT_CANCEL_URL ||
-    `${process.env.PHP_SITE_BASE_URL || "http://localhost/localankrah"}/vehicle-quote.html#cancelled`;
+    `${phpSiteBaseUrl}/vehicle-quote.html#cancelled`;
 
   // 1. On a re-quote, void BOTH previous payment links (full + deposit) so a
   // customer can't pay a stale amount through either one.
