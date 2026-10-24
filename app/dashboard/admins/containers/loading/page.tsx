@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft,
   Container,
   QrCode,
   Package,
   ShieldCheck,
+  CameraIcon,
 } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
 import { Table } from "../../../../components/ui/Table";
 import { Modal } from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
@@ -30,6 +32,14 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 const plusDaysStr = (d: number) =>
   new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
 
+// Camera QR/barcode scanning (phone-friendly) — same html5-qrcode flow the
+// destination unstuffing terminal uses. The camera is just another input
+// method; every read still goes through processScan → the secured scan-item API.
+const SCANNER_DIV_ID = "loading-qr-scanner-region";
+// Ignore repeat reads of the same code within this window — the camera decodes
+// the same label several times per second while it's in frame.
+const DUPLICATE_COOLDOWN_MS = 4000;
+
 const scannedCount = (g: InvoiceGroup) =>
   g.items.reduce((a, i) => a + i.quantity, 0);
 
@@ -51,6 +61,10 @@ export default function ContainerLoadingPage() {
   const [scanInput, setScanInput] = useState("");
   const [terminalMessage, setTerminalMessage] = useState("");
 
+  // Camera scanning state
+  const [cameraOn, setCameraOn] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
   // Modal State Engine Configuration
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
@@ -65,12 +79,26 @@ export default function ContainerLoadingPage() {
 
   const scanInputRef = useRef<HTMLInputElement>(null);
 
-  // Maintain persistent focus on scanner anchor
+  // Camera scanner handle + a cooldown map (refs — read inside the camera
+  // callback, which is registered once and must not close over stale state).
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const lastScansRef = useRef<Map<string, number>>(new Map());
+  // Always points at the latest processScan so the camera callback dispatches
+  // through current state without being re-registered on every render.
+  const processScanRef = useRef<(value: string) => void>(() => {});
+
+  // Maintain persistent focus on the hardware-scanner anchor — but NOT while the
+  // camera is on (focusing a text field there pops the mobile keyboard).
   useEffect(() => {
-    if (isInitialized && scanInputRef.current && !modalConfig.isOpen) {
+    if (
+      isInitialized &&
+      scanInputRef.current &&
+      !modalConfig.isOpen &&
+      !cameraOn
+    ) {
       scanInputRef.current.focus();
     }
-  }, [isInitialized, invoiceGroups, modalConfig.isOpen]);
+  }, [isInitialized, invoiceGroups, modalConfig.isOpen, cameraOn]);
 
   // PHASE 1: Initialize the session directly in the DB
   const handleInitializeTerminal = async (e: React.FormEvent) => {
@@ -236,6 +264,70 @@ export default function ContainerLoadingPage() {
     }
   };
 
+  // Keep the camera callback dispatching through the latest processScan.
+  useEffect(() => {
+    processScanRef.current = processScan;
+  });
+
+  // ---------- Camera lifecycle (phone QR/barcode scanning) ----------
+  const stopCamera = useCallback(async () => {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    setCameraOn(false);
+    if (scanner) {
+      try {
+        await scanner.stop();
+        scanner.clear();
+      } catch {
+        /* already stopped */
+      }
+    }
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    setCameraError(null);
+    // getUserMedia needs a secure context (HTTPS, or localhost).
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      setCameraError(
+        "Camera needs HTTPS (or localhost). Open this terminal over a secure connection.",
+      );
+      return;
+    }
+    try {
+      const scanner = new Html5Qrcode(SCANNER_DIV_ID);
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: "environment" }, // back camera
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        (decodedText) => {
+          // Cooldown: the camera decodes the same label several times/sec.
+          const now = Date.now();
+          const last = lastScansRef.current.get(decodedText) || 0;
+          if (now - last < DUPLICATE_COOLDOWN_MS) return;
+          lastScansRef.current.set(decodedText, now);
+          processScanRef.current(decodedText);
+        },
+        () => {
+          /* per-frame decode misses — normal, ignore */
+        },
+      );
+      setCameraOn(true);
+    } catch (err) {
+      console.error("Camera start failed:", err);
+      setCameraError(
+        "Could not access the camera. Check this site's camera permission.",
+      );
+      scannerRef.current = null;
+    }
+  }, []);
+
+  // Stop the camera when leaving the page / unmounting.
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
+
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (scanInput.trim()) {
@@ -245,6 +337,7 @@ export default function ContainerLoadingPage() {
   };
 
   const resetLocalSession = () => {
+    void stopCamera();
     setIsInitialized(false);
     setNewContainerNum("");
     setNewSealNum("");
@@ -559,6 +652,52 @@ export default function ContainerLoadingPage() {
                   onChange={(e) => setScanInput(e.target.value)}
                 />
               </form>
+
+              {/* Camera scanning — phone-friendly alternative to the laser gun.
+                  Both feed the same processScan → scan-item pipeline. */}
+              <div style={{ marginTop: "0.85rem" }}>
+                <div
+                  id={SCANNER_DIV_ID}
+                  style={{
+                    width: "100%",
+                    maxWidth: 360,
+                    margin: cameraOn ? "0 auto 0.6rem" : 0,
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    background: cameraOn ? "#000" : "transparent",
+                  }}
+                />
+                {!cameraOn ? (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={startCamera}
+                  >
+                    <CameraIcon size={16} style={{ marginRight: "0.4rem" }} />
+                    Scan with Camera
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={stopCamera}
+                  >
+                    Stop Camera
+                  </Button>
+                )}
+                {cameraError && (
+                  <p
+                    style={{
+                      marginTop: "0.5rem",
+                      color: "#f87171",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {cameraError}
+                  </p>
+                )}
+              </div>
+
               <div className={styles.statusDisplay}>
                 <p
                   className={
