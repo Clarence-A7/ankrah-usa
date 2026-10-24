@@ -1,16 +1,34 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, type CSSProperties } from "react";
 import {
   PackageCheck,
   Check,
   Search,
   MapPin,
   Phone,
+  Navigation,
   Boxes,
 } from "lucide-react";
 import styles from "../../../styles/my-pickups.module.css";
 import CollectConfirmModal from "../../../../components/CollectConfirmModal";
+
+// Inline so no CSS-module change is needed — one-tap Navigate / Call on each card.
+function cardActionStyle(color: string, bg: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.3rem",
+    padding: "0.35rem 0.65rem",
+    borderRadius: "0.5rem",
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    textDecoration: "none",
+    color,
+    backgroundColor: bg,
+    border: `1px solid ${color}33`,
+  };
+}
 
 interface ShipmentItem {
   id: string;
@@ -278,13 +296,45 @@ export default function MyPickupsClient({
                         {shipment.pickupState} {shipment.pickupZip}
                       </span>
                     </p>
-                    <a
-                      href={`tel:${shipment.consignerPhone}`}
-                      className={styles.pickupCardPhoneLink}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "0.5rem",
+                        flexWrap: "wrap",
+                        marginTop: "0.4rem",
+                      }}
                     >
-                      <Phone className={styles.inlineIcon} aria-hidden="true" />
-                      {shipment.consignerPhone}
-                    </a>
+                      {(() => {
+                        const navTarget = [
+                          shipment.pickupStreet,
+                          shipment.pickupCity,
+                          shipment.pickupState,
+                          shipment.pickupZip,
+                        ]
+                          .filter(Boolean)
+                          .join(", ");
+                        return navTarget ? (
+                          <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                              navTarget,
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={cardActionStyle("#2563eb", "#eff6ff")}
+                          >
+                            <Navigation size={14} /> Navigate
+                          </a>
+                        ) : null;
+                      })()}
+                      {shipment.consignerPhone && (
+                        <a
+                          href={`tel:${shipment.consignerPhone}`}
+                          style={cardActionStyle("#15803d", "#f0fdf4")}
+                        >
+                          <Phone size={14} /> Call
+                        </a>
+                      )}
+                    </div>
                   </div>
 
                   <div className={styles.pickupCardColumn}>

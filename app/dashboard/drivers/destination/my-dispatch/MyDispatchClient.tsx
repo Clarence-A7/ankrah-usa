@@ -1,10 +1,27 @@
 // app/dashboard/drivers/origin/my-pickups/MyPickupsClient.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { Truck, Check } from "lucide-react";
+import React, { useMemo, useState, type CSSProperties } from "react";
+import { Truck, Check, Navigation, Phone } from "lucide-react";
 import styles from "../../../styles/my-pickups.module.css";
 import DeliveryModal from "../../../../components/DeliveryModal";
+
+// Inline so no CSS-module change is needed — one-tap Navigate / Call on each card.
+function cardActionStyle(color: string, bg: string): CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.3rem",
+    padding: "0.35rem 0.65rem",
+    borderRadius: "0.5rem",
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    textDecoration: "none",
+    color,
+    backgroundColor: bg,
+    border: `1px solid ${color}33`,
+  };
+}
 
 interface ShipmentItem {
   id: string;
@@ -161,12 +178,35 @@ export default function MyPickupsClient({
                       {shipment.destinationCity}
                       <br />
                     </p>
-                    <a
-                      href={`tel:${shipment.consigneePhone}`}
-                      className={styles.pickupCardPhoneLink}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "0.5rem",
+                        flexWrap: "wrap",
+                        marginTop: "0.4rem",
+                      }}
                     >
-                      {shipment.consigneePhone}
-                    </a>
+                      {shipment.destinationCity && (
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                            shipment.destinationCity,
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={cardActionStyle("#2563eb", "#eff6ff")}
+                        >
+                          <Navigation size={14} /> Navigate
+                        </a>
+                      )}
+                      {shipment.consigneePhone && (
+                        <a
+                          href={`tel:${shipment.consigneePhone}`}
+                          style={cardActionStyle("#15803d", "#f0fdf4")}
+                        >
+                          <Phone size={14} /> Call
+                        </a>
+                      )}
+                    </div>
                   </div>
 
                   <div className={styles.pickupCardColumn}>

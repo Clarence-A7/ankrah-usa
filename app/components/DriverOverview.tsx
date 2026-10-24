@@ -15,7 +15,7 @@
  * - Same same-origin + no-store fetch pattern as the admin overview.
  */
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./styles/DriverOverview.module.css";
 
 const REFRESH_INTERVAL_MS = 60_000;
@@ -287,15 +287,11 @@ function StopCard({
   invoiceNumber,
   status,
   location,
-  address,
-  phone,
   updatedAt,
 }: {
   invoiceNumber: string;
   status: string;
   location: string;
-  address: string;
-  phone: string | null;
   updatedAt: string;
 }) {
   const tone = STATUS_TONE[status] ?? "default";
@@ -308,12 +304,6 @@ function StopCard({
           ? styles.stopStatusCoral
           : styles.stopStatusDefault;
 
-  const navHref = address
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
-    : null;
-  const telDigits = phone ? phone.replace(/[^\d+]/g, "") : "";
-  const telHref = telDigits ? `tel:${telDigits}` : null;
-
   return (
     <div className={styles.stopCard}>
       <div className={styles.stopTop}>
@@ -322,45 +312,8 @@ function StopCard({
       </div>
       <p className={styles.stopLocation}>{location}</p>
       <p className={styles.stopTime}>{relativeTime(updatedAt)}</p>
-
-      {(navHref || telHref) && (
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-          {navHref && (
-            <a
-              href={navHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={stopActionStyle("#eff6ff", "#1d4ed8")}
-            >
-              <span aria-hidden>↗</span> Navigate
-            </a>
-          )}
-          {telHref && (
-            <a href={telHref} style={stopActionStyle("#f0fdf4", "#15803d")}>
-              <span aria-hidden>☎</span> Call
-            </a>
-          )}
-        </div>
-      )}
     </div>
   );
-}
-
-function stopActionStyle(bg: string, color: string): CSSProperties {
-  return {
-    flex: 1,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    padding: "9px 10px",
-    borderRadius: 10,
-    background: bg,
-    color,
-    fontSize: "0.82rem",
-    fontWeight: 600,
-    textDecoration: "none",
-  };
 }
 
 function StopList({
@@ -426,8 +379,6 @@ function OriginDriverBoard({ data }: { data: OriginDriverMetrics }) {
                 [s.pickupStreet, s.pickupCity].filter(Boolean).join(", ") ||
                 "No address on file"
               }
-              address={s.fullAddress}
-              phone={s.phone}
               updatedAt={s.updatedAt}
             />
           ))}
@@ -481,8 +432,6 @@ function DestinationDriverBoard({ data }: { data: DestinationDriverMetrics }) {
               invoiceNumber={s.invoiceNumber}
               status={s.status}
               location={s.destinationCity}
-              address={s.fullAddress}
-              phone={s.phone}
               updatedAt={s.updatedAt}
             />
           ))}

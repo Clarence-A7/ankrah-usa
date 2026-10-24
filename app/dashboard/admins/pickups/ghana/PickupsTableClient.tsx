@@ -25,6 +25,16 @@ function formatScheduledPickup(iso: string | null): string {
   });
 }
 
+// Local calendar date (YYYY-MM-DD) of a scheduled pickup, for date-filtering —
+// matched against the <input type="date"> value, which is also local.
+function scheduledLocalYmd(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 // Mirrors the INVOICE_STATUS_PIPELINE / "at least" matching pattern your
 // project notes describe as needing consolidation into a shared
 // lib/invoice-status.ts. Duplicated here locally rather than guessed-imported
@@ -119,6 +129,9 @@ export default function PickupsTableClient({
   const [scheduleTarget, setScheduleTarget] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<StatusKey>(STATUS_TABS[0].key);
   const [searchTerm, setSearchTerm] = useState("");
+  // Scheduled-pickup date filter (YYYY-MM-DD) — narrows the Ready/Pending queue
+  // to one day's pickups so a whole date can be selected and bulk-dispatched.
+  const [scheduleDateFilter, setScheduleDateFilter] = useState("");
 
   // invoicesData is used directly below (not copied into its own useState),
   // so unlike ContainersClient this page needs no prop-sync effect —
@@ -168,13 +181,15 @@ export default function PickupsTableClient({
   }, [searchedData]);
 
   // While searching, ignore the tab filter so matches in other tabs aren't hidden.
-  const filteredData = useMemo(
-    () =>
-      isSearching
-        ? searchedData
-        : searchedData.filter((row) => activeTabDef.matches(row.status)),
-    [searchedData, activeTabDef, isSearching],
-  );
+  const filteredData = useMemo(() => {
+    const base = isSearching
+      ? searchedData
+      : searchedData.filter((row) => activeTabDef.matches(row.status));
+    if (!scheduleDateFilter) return base;
+    return base.filter(
+      (row) => scheduledLocalYmd(row.scheduledPickupAt) === scheduleDateFilter,
+    );
+  }, [searchedData, activeTabDef, isSearching, scheduleDateFilter]);
 
   // Ready For Pickup invoices have no driver yet — showing an empty/N-D
   // Driver column for the whole tab is just noise. Still shown during a
@@ -184,6 +199,7 @@ export default function PickupsTableClient({
   const handleTabChange = (tabKey: StatusKey) => {
     setActiveTab(tabKey);
     setSelectedIds([]);
+    setScheduleDateFilter("");
   };
 
   const handleSelectRow = (id: string) => {
@@ -469,6 +485,30 @@ export default function PickupsTableClient({
       header: showStatusColumn ? "Status" : "Action",
       render: (row: any) => {
         if (showStatusColumn) {
+          // In the Received tab the column shows status, but "Received At Origin"
+          // rows still need their per-invoice Label (QR) action — the labels get
+          // stuck on each item before containerization, so this can't be hidden.
+          if (row.status === "Received At Origin") {
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.375rem",
+                  alignItems: "flex-start",
+                }}
+              >
+                {getStatusBadge(row.status)}
+                <Button
+                  className={styles.actionBtn}
+                  onClick={() => handlePrintLabel(row)}
+                >
+                  <Printer size={14} style={{ marginRight: "0.25rem" }} />
+                  Label
+                </Button>
+              </div>
+            );
+          }
           return getStatusBadge(row.status);
         }
         if (row.status === "Received At Origin") {
@@ -637,6 +677,41 @@ export default function PickupsTableClient({
               >
                 Dispatch Selected ({selectedIds.length})
               </Button>
+            )}
+
+          {(activeTab === "Ready For Pickup" ||
+            activeTab === "Pending Pickup") &&
+            !isSearching && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.375rem",
+                }}
+              >
+                <CalendarClock size={16} style={{ color: "#6b7280" }} />
+                <input
+                  type="date"
+                  value={scheduleDateFilter}
+                  onChange={(e) => {
+                    setScheduleDateFilter(e.target.value);
+                    setSelectedIds([]);
+                  }}
+                  className={styles.searchInput}
+                  style={{ maxWidth: "11rem" }}
+                  title="Filter by scheduled pickup date"
+                  aria-label="Filter by scheduled pickup date"
+                />
+                {scheduleDateFilter && (
+                  <Button
+                    type="button"
+                    className={styles.clearBtn}
+                    onClick={() => setScheduleDateFilter("")}
+                  >
+                    Clear date
+                  </Button>
+                )}
+              </div>
             )}
 
           <input
