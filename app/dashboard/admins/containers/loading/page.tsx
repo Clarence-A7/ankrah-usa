@@ -28,6 +28,16 @@ interface InvoiceGroup {
   totalBooked?: number; // booked piece count from the server (first scan)
 }
 
+// An open (unsealed) container the admin can resume loading.
+interface OpenContainer {
+  id: string;
+  originCity: string;
+  destinationCity: string;
+  updatedAt: string;
+  invoiceCount: number;
+  loadedPieces: number;
+}
+
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const plusDaysStr = (d: number) =>
   new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
@@ -64,6 +74,10 @@ export default function ContainerLoadingPage() {
   // Camera scanning state
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+
+  // Resumable (open) containers for "Save & Continue Later"
+  const [openContainers, setOpenContainers] = useState<OpenContainer[]>([]);
+  const [resuming, setResuming] = useState(false);
 
   // Modal State Engine Configuration
   const [modalConfig, setModalConfig] = useState({
@@ -103,6 +117,23 @@ export default function ContainerLoadingPage() {
       scanInputRef.current.focus();
     }
   }, [isInitialized, invoiceGroups, modalConfig.isOpen, cameraOn]);
+
+  // Resume picker: load open (unsealed) containers whenever the setup screen
+  // is shown, so a half-loaded container can be continued.
+  const loadOpenContainers = useCallback(async () => {
+    try {
+      const res = await fetch("/api/containers/loading-state");
+      if (!res.ok) return;
+      const data = await res.json();
+      setOpenContainers(data.openContainers ?? []);
+    } catch {
+      /* resume is optional — ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) loadOpenContainers();
+  }, [isInitialized, loadOpenContainers]);
 
   // PHASE 1: Initialize the session directly in the DB
   const handleInitializeTerminal = async (e: React.FormEvent) => {
@@ -393,6 +424,91 @@ export default function ContainerLoadingPage() {
     setInvoiceGroups([]);
   };
 
+  // Resume a half-loaded container: hydrate the session + ledger from the
+  // persisted loaded counts, then jump straight into the live terminal.
+  const handleResume = async (containerNumber: string) => {
+    setResuming(true);
+    setTerminalMessage(`⌛ Resuming ${containerNumber}…`);
+    try {
+      const res = await fetch(
+        `/api/containers/loading-state?containerNumber=${encodeURIComponent(containerNumber)}`,
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Could not resume this container.");
+      }
+      const c = data.container;
+      setNewContainerNum(c.id);
+      setNewSealNum(c.sealNumber);
+      setContainerSize(c.size);
+      setDestinationCity(c.destinationCity);
+      setShippingLine(c.shippingLine);
+      setVesselName(c.vessel);
+      setOriginCity(c.originCity);
+      setDepartureDate(c.departureDate);
+      setEta(c.eta);
+
+      const groups: InvoiceGroup[] = (data.invoices ?? [])
+        .map((inv: any) => {
+          const items: ScannedItem[] = (inv.items ?? [])
+            .filter((it: any) => it.loaded > 0)
+            .map((it: any) => ({ itemType: it.itemType, quantity: it.loaded }));
+          const totalBooked = (inv.items ?? []).reduce(
+            (a: number, it: any) => a + it.booked,
+            0,
+          );
+          const loaded = items.reduce((a, it) => a + it.quantity, 0);
+          return {
+            invoiceNumber: inv.invoiceNumber,
+            items,
+            totalBooked,
+            loadStatus: loaded >= totalBooked ? "Full" : "Partial",
+          } as InvoiceGroup;
+        })
+        .filter((g: InvoiceGroup) => g.items.length > 0);
+
+      scannedPieceIdsRef.current.clear();
+      setInvoiceGroups(groups);
+      setIsInitialized(true);
+      setTerminalMessage(`🟢 Resumed ${containerNumber}. Continue scanning.`);
+    } catch (error: any) {
+      setTerminalMessage(`❌ ${error.message}`);
+      setModalConfig({
+        isOpen: true,
+        title: "Resume Failed",
+        message: error.message || "Could not resume this container.",
+        variant: "danger",
+        confirmLabel: "Dismiss",
+        cancelLabel: "Cancel",
+        onConfirm: undefined,
+        isLoading: false,
+      });
+    } finally {
+      setResuming(false);
+    }
+  };
+
+  // Save & Continue Later: every scan already persists, so this just confirms
+  // and returns to the setup screen, leaving the container open to resume.
+  const handleSaveAndContinueLater = () => {
+    setModalConfig({
+      isOpen: true,
+      title: "Save & Continue Later?",
+      message:
+        "Loading progress is saved automatically on every scan. This container stays open — resume it anytime from the Resume list on the start screen.",
+      variant: "info",
+      confirmLabel: "Save & Exit",
+      cancelLabel: "Keep Loading",
+      isLoading: false,
+      onConfirm: () => {
+        const num = newContainerNum;
+        resetLocalSession();
+        setTerminalMessage(`💾 Progress saved — ${num} can be resumed later.`);
+        setModalConfig((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
   const handleResetClick = () => {
     setModalConfig({
       isOpen: true,
@@ -544,6 +660,62 @@ export default function ContainerLoadingPage() {
         </header>
 
         {!isInitialized ? (
+          <>
+            {openContainers.length > 0 && (
+              <div
+                className={styles.setupCard}
+                style={{ marginBottom: "1rem" }}
+              >
+                <h2 className={styles.setupTitle}>
+                  <Container size={20} /> Resume an in-progress container
+                </h2>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.6rem",
+                  }}
+                >
+                  {openContainers.map((oc) => (
+                    <div
+                      key={oc.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        padding: "0.75rem 0.9rem",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 8,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div>
+                        <strong
+                          style={{ color: "#2563eb", fontFamily: "monospace" }}
+                        >
+                          {oc.id}
+                        </strong>
+                        <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                          {oc.originCity} → {oc.destinationCity} ·{" "}
+                          {oc.invoiceCount} invoice(s) · {oc.loadedPieces} pc
+                          loaded
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        disabled={resuming}
+                        onClick={() => handleResume(oc.id)}
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           <div className={styles.setupCard}>
             <h2 className={styles.setupTitle}>
               <Container size={20} /> New Consolidation Session
@@ -681,6 +853,7 @@ export default function ContainerLoadingPage() {
               </Button>
             </form>
           </div>
+          </>
         ) : (
           <div className={styles.liveTerminalWorkspace}>
             <div className={styles.scanDock}>
@@ -770,18 +943,25 @@ export default function ContainerLoadingPage() {
               )}
             </div>
 
-            {invoiceGroups.length > 0 && (
-              <div className={styles.actionFooterRow}>
+            <div className={styles.actionFooterRow}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleSaveAndContinueLater}
+              >
+                Save &amp; Continue Later
+              </Button>
+              {invoiceGroups.length > 0 && (
                 <Button
                   type="button"
                   variant="success"
                   onClick={handleCloseContainerSubmit}
                   className={styles.finalSubmitButtonStyles}
                 >
-                  <ShieldCheck size={20} /> Close & Seal Container
+                  <ShieldCheck size={20} /> Close &amp; Seal Container
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>

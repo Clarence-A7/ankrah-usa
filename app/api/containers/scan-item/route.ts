@@ -97,7 +97,16 @@ export async function POST(req: NextRequest) {
         amountDue: true,
         // Cargo only — money lines (surcharge/tax/discount) are never loaded or
         // counted as physical pieces.
-        items: { where: { isCharge: false }, select: { itemType: true, quantity: true } },
+        items: {
+          where: { isCharge: false },
+          select: {
+            id: true,
+            itemType: true,
+            quantity: true,
+            loadedQuantity: true,
+          },
+          orderBy: { createdAt: "asc" },
+        },
       },
     });
 
@@ -130,28 +139,71 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. The scanned item type must belong to this invoice's manifest
-    const manifestItem = invoice.items.find(
+    // 6. The scanned item type must be on the manifest AND still have an
+    //    unloaded piece. This is the server-side over-scan cap: once every
+    //    booked piece of a type is loaded, further scans are refused (no 10/9).
+    const rowsOfType = invoice.items.filter(
       (i) => i.itemType.toLowerCase() === itemType.toLowerCase(),
     );
-    if (!manifestItem) {
+    if (rowsOfType.length === 0) {
+      return NextResponse.json(
+        { error: `"${itemType}" is not on invoice ${invoiceNumber}'s manifest.` },
+        { status: 409 },
+      );
+    }
+    const targetItem = rowsOfType.find((i) => i.loadedQuantity < i.quantity);
+    if (!targetItem) {
       return NextResponse.json(
         {
-          error: `"${itemType}" is not on invoice ${invoiceNumber}'s manifest.`,
+          error: `All "${itemType}" pieces on invoice ${invoiceNumber} are already loaded.`,
+          code: "ITEM_FULLY_LOADED",
         },
         { status: 409 },
       );
     }
 
-    // 7. Link invoice to container on first scan (status unchanged until seal)
-    if (!alreadyLinked) {
-      await db.invoice.update({
-        where: { id: invoice.id },
-        data: { containerId: containerNumber, loadStatus: "Partial" },
+    // 7. Persist the load: bump this item's loaded tally (optimistic
+    //    concurrency on the value we just read) and link the invoice to the
+    //    container on first scan — atomically. The persisted tally is what
+    //    makes a half-loaded container resumable ("Save & Continue Later").
+    try {
+      await db.$transaction(async (tx) => {
+        const bumped = await tx.manifestItem.updateMany({
+          where: {
+            id: targetItem.id,
+            loadedQuantity: targetItem.loadedQuantity,
+          },
+          data: { loadedQuantity: { increment: 1 } },
+        });
+        if (bumped.count === 0) {
+          throw Object.assign(new Error("LOAD_CONFLICT"), {
+            code: "LOAD_CONFLICT",
+          });
+        }
+        if (!alreadyLinked) {
+          await tx.invoice.update({
+            where: { id: invoice.id },
+            data: { containerId: containerNumber, loadStatus: "Partial" },
+          });
+        }
       });
+    } catch (err: any) {
+      if (err?.code === "LOAD_CONFLICT") {
+        return NextResponse.json(
+          {
+            error: "Two scans landed at once — scan again to confirm.",
+            code: "LOAD_CONFLICT",
+          },
+          { status: 409 },
+        );
+      }
+      throw err; // → outer catch → 500
     }
 
     const totalBooked = invoice.items.reduce((a, i) => a + i.quantity, 0);
+    // items were read before the increment, so add this scan's +1.
+    const loadedForInvoice =
+      invoice.items.reduce((a, i) => a + i.loadedQuantity, 0) + 1;
 
     return NextResponse.json({
       ok: true,
@@ -164,10 +216,10 @@ export async function POST(req: NextRequest) {
         Number(invoice.amountDue) > 0
           ? `GHS ${Number(invoice.amountDue).toLocaleString()}`
           : "GHS 0.00",
+      itemType: targetItem.itemType,
       totalBooked,
-      // The terminal UI counts physical scans locally; server reports the
-      // booked total so the client can decide Partial vs Full display.
-      loadStatus: "Partial",
+      loadedForInvoice,
+      loadStatus: loadedForInvoice >= totalBooked ? "Full" : "Partial",
     });
   } catch (error) {
     console.error("❌ Scan-item failure:", error); // detail server-side only

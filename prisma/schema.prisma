@@ -103,6 +103,10 @@ model ManifestItem {
   updatedAt       DateTime @updatedAt
   invoiceId       String
   scannedQuantity Int      @default(0)
+  // Pieces loaded into the container at ORIGIN (containerization). Independent
+  // of scannedQuantity, which is the DESTINATION receive count. Persists the
+  // loading tally so a half-loaded container can be saved and resumed later.
+  loadedQuantity  Int      @default(0)
   // True for money lines (distance surcharge, sales tax, discount) that ride on
   // the invoice but are NOT physical cargo. Excluded from every manifest list,
   // piece count, and scan gate; still billed and shown in the price breakdown.
