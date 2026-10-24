@@ -83,6 +83,10 @@ export default function ContainerLoadingPage() {
   // callback, which is registered once and must not close over stale state).
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const lastScansRef = useRef<Map<string, number>>(new Map());
+  // Physical-piece ids already loaded this session — a QR carries a unique id
+  // per piece, so re-scanning the same sticker (or exceeding the booked count)
+  // is rejected instead of pushing the tally past the booked total (e.g. 10/9).
+  const scannedPieceIdsRef = useRef<Set<string>>(new Set());
   // Always points at the latest processScan so the camera callback dispatches
   // through current state without being re-registered on every render.
   const processScanRef = useRef<(value: string) => void>(() => {});
@@ -185,6 +189,43 @@ export default function ContainerLoadingPage() {
     }
 
     const { invoiceNumber: scannedInvoice, itemType: scannedItemType } = parsed;
+    const pieceId = parsed.itemId;
+
+    // ── Guard rails ──────────────────────────────────────────────────────
+    // 1) Never count the same physical piece twice (QR carries a unique id).
+    if (pieceId && scannedPieceIdsRef.current.has(pieceId)) {
+      setTerminalMessage(
+        `⚠️ That ${scannedItemType} piece was already scanned into this container.`,
+      );
+      return;
+    }
+    // 2) Never load more pieces than the invoice actually booked (no 10/9).
+    const existingGroup = invoiceGroups.find(
+      (g) => g.invoiceNumber === scannedInvoice,
+    );
+    if (
+      existingGroup?.totalBooked !== undefined &&
+      scannedCount(existingGroup) >= existingGroup.totalBooked
+    ) {
+      setTerminalMessage(
+        `⚠️ ${scannedInvoice} is already fully loaded (${existingGroup.totalBooked}/${existingGroup.totalBooked}).`,
+      );
+      setModalConfig({
+        isOpen: true,
+        title: "Invoice Already Fully Loaded",
+        message: `All ${existingGroup.totalBooked} booked piece(s) for ${scannedInvoice} are already loaded into this container. You can't scan more than the invoice has.`,
+        variant: "warning",
+        confirmLabel: "Dismiss",
+        cancelLabel: "Cancel",
+        onConfirm: undefined,
+        isLoading: false,
+      });
+      return;
+    }
+
+    // Optimistically claim this piece id so a rapid double-scan is caught
+    // before the request returns; released again if the scan fails.
+    if (pieceId) scannedPieceIdsRef.current.add(pieceId);
 
     try {
       const response = await fetch("/api/containers/scan-item", {
@@ -259,6 +300,8 @@ export default function ContainerLoadingPage() {
         `✅ Logged ${scannedItemType} to ${result.invoiceNumber}`,
       );
     } catch (error: any) {
+      // Scan didn't register — release the piece id so it can be retried.
+      if (pieceId) scannedPieceIdsRef.current.delete(pieceId);
       console.error("Scan transmission error:", error);
       setTerminalMessage(`❌ Scan Sync Error: ${error.message}`);
     }
@@ -338,6 +381,7 @@ export default function ContainerLoadingPage() {
 
   const resetLocalSession = () => {
     void stopCamera();
+    scannedPieceIdsRef.current.clear();
     setIsInitialized(false);
     setNewContainerNum("");
     setNewSealNum("");
