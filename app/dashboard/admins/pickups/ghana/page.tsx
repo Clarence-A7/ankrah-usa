@@ -51,6 +51,11 @@ async function getInvoicesManifest() {
         ? (driverNameByStaffId.get(invoice.pickupDriver) ??
           invoice.pickupDriver)
         : null,
+      // Alias the modal's "Picked up by" reads — keeps the table's driverName intact.
+      pickupDriverName: invoice.pickupDriver
+        ? (driverNameByStaffId.get(invoice.pickupDriver) ??
+          invoice.pickupDriver)
+        : null,
     }));
   } catch (error) {
     console.error("Failed to fetch invoices:", error);

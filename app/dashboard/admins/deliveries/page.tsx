@@ -33,17 +33,30 @@ export default async function DeliveriesPage() {
       id: true,
       invoiceNumber: true,
       containerId: true,
+      customerCode: true,
       consignerName: true,
       consignerPhone: true,
+      consignerEmail: true,
       consigneeName: true,
       consigneePhone: true,
       destinationCity: true,
+      pickupStreet: true,
+      pickupCity: true,
+      pickupState: true,
+      pickupZip: true,
       shipmentMode: true,
       amountDue: true,
       amountPaid: true,
+      pickupDriver: true,
       deliveryDriver: true,
       status: true,
+      createdAt: true,
       updatedAt: true,
+      // Cargo only — the modal's item list shows physical pieces, not charges.
+      items: {
+        where: { isCharge: false },
+        select: { id: true, itemType: true, quantity: true },
+      },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -73,6 +86,30 @@ export default async function DeliveriesPage() {
     }
   }
 
+  // 4a. Resolve pickupDriver refs (origin driver) -> names, for the modal's
+  //     "Picked up by" line. Separate from delivery drivers (different role).
+  const pickupRefs = [
+    ...new Set(
+      invoices
+        .map((inv) => inv.pickupDriver)
+        .filter((ref): ref is string => Boolean(ref)),
+    ),
+  ];
+  const pickupDriverNameByRef = new Map<string, string>();
+  if (pickupRefs.length > 0) {
+    const pickers = await db.user.findMany({
+      where: {
+        role: "o_driver",
+        OR: [{ staffId: { in: pickupRefs } }, { id: { in: pickupRefs } }],
+      },
+      select: { id: true, staffId: true, name: true },
+    });
+    for (const p of pickers) {
+      if (p.staffId) pickupDriverNameByRef.set(p.staffId, p.name);
+      pickupDriverNameByRef.set(p.id, p.name);
+    }
+  }
+
   // 4b. Proof-of-delivery existence. Best-effort: a not-yet-created
   //     delivery_proofs table must never break the deliveries dashboard.
   const podByInvoice = new Map<string, string>();
@@ -93,19 +130,31 @@ export default async function DeliveriesPage() {
     id: inv.id,
     invoiceNumber: inv.invoiceNumber,
     containerId: inv.containerId ?? "—",
+    customerCode: inv.customerCode ?? null,
     consignerName: inv.consignerName,
     consignerPhone: inv.consignerPhone,
+    consignerEmail: inv.consignerEmail ?? null,
     consigneeName: inv.consigneeName,
     consigneePhone: inv.consigneePhone,
     destinationCity: inv.destinationCity,
+    pickupStreet: inv.pickupStreet ?? null,
+    pickupCity: inv.pickupCity ?? null,
+    pickupState: inv.pickupState ?? null,
+    pickupZip: inv.pickupZip ?? null,
     shipmentMode: inv.shipmentMode,
     amountDue: inv.amountDue ? Number(inv.amountDue) : 0,
     amountPaid: inv.amountPaid ? Number(inv.amountPaid) : 0,
     driverName: inv.deliveryDriver
       ? (driverNameByRef.get(inv.deliveryDriver) ?? inv.deliveryDriver)
       : null,
+    pickupDriver: inv.pickupDriver ?? null,
+    pickupDriverName: inv.pickupDriver
+      ? (pickupDriverNameByRef.get(inv.pickupDriver) ?? inv.pickupDriver)
+      : null,
     status: inv.status,
+    createdAt: inv.createdAt?.toISOString() ?? null,
     updatedAt: inv.updatedAt?.toISOString() ?? null,
+    items: inv.items ?? [],
     hasPod: podByInvoice.has(inv.id),
     podCapturedAt: podByInvoice.get(inv.id) ?? null,
   }));

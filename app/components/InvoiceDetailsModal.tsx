@@ -36,9 +36,39 @@ export interface InvoiceContainerData {
   totalItems?: number;
   amountPaid?: string | number;
   amountDue?: string | number;
+  status?: string;
   pickupDriver?: string;
+  pickupDriverName?: string;
   createdAt?: string;
   items?: InvoiceItemData[];
+}
+
+// Self-contained status → badge colors (no global theme dependency), grouped by
+// pipeline phase. Falls back to a neutral grey for anything unmapped.
+function statusBadgeStyle(status?: string): React.CSSProperties {
+  const base: React.CSSProperties = {
+    padding: "2px 10px",
+    fontSize: "0.7rem",
+    fontWeight: 600,
+    borderRadius: "9999px",
+    border: "1px solid",
+    whiteSpace: "nowrap",
+  };
+  const palette: Record<string, { bg: string; fg: string; bd: string }> = {
+    "Ready For Pickup": { bg: "#eff6ff", fg: "#1d4ed8", bd: "#bfdbfe" },
+    "Pending Pickup": { bg: "#fff7ed", fg: "#c2410c", bd: "#fed7aa" },
+    Collected: { bg: "#ecfeff", fg: "#0e7490", bd: "#a5f3fc" },
+    "Received At Origin": { bg: "#eef2ff", fg: "#4338ca", bd: "#c7d2fe" },
+    "In-Transit": { bg: "#f5f3ff", fg: "#6d28d9", bd: "#ddd6fe" },
+    Arrived: { bg: "#f5f3ff", fg: "#6d28d9", bd: "#ddd6fe" },
+    Cleared: { bg: "#f0f9ff", fg: "#0369a1", bd: "#bae6fd" },
+    "Received At Hub": { bg: "#ecfeff", fg: "#0e7490", bd: "#a5f3fc" },
+    "Out For Delivery": { bg: "#eff6ff", fg: "#1d4ed8", bd: "#bfdbfe" },
+    "Returned To Hub": { bg: "#fef2f2", fg: "#b91c1c", bd: "#fecaca" },
+    Delivered: { bg: "#f0fdf4", fg: "#15803d", bd: "#bbf7d0" },
+  };
+  const c = palette[status ?? ""] ?? { bg: "#f3f4f6", fg: "#374151", bd: "#e5e7eb" };
+  return { ...base, backgroundColor: c.bg, color: c.fg, borderColor: c.bd };
 }
 
 interface ContainerDetailsModalProps {
@@ -55,6 +85,11 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
   const { user, isLoading } = useAuth();
 
   if (!isOpen || !container || isLoading || !user) return null;
+
+  // Function-based visibility: destination admins never see money (matches the
+  // app-wide rule in getContainersForDashboard). super_admin + origin_admin do.
+  const canSeeFinancials =
+    user.role === "super_admin" || user.role === "origin_admin";
 
   const renderPaymentBadge = () => {
     const due = Number(container.amountDue || 0);
@@ -106,7 +141,14 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
-          <h3>INVOICE NUMBER: {container.invoiceNumber || container.id}</h3>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h3>INVOICE NUMBER: {container.invoiceNumber || container.id}</h3>
+            {container.status && (
+              <span style={statusBadgeStyle(container.status)}>
+                {container.status}
+              </span>
+            )}
+          </div>
           <button
             className={styles.closeBtn}
             onClick={onClose}
@@ -193,12 +235,14 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
                 </span>
               </div>
 
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>PAYMENT STATUS:</span>
-                <div className="mt-1 flex items-center">
-                  {renderPaymentBadge()}
+              {canSeeFinancials && (
+                <div className={styles.detailItem}>
+                  <span className={styles.detailLabel}>PAYMENT STATUS:</span>
+                  <div className="mt-1 flex items-center">
+                    {renderPaymentBadge()}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>CONTAINER NO:</span>
@@ -236,7 +280,10 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
           {/* BOTTOM RUNNER INFO SECTION */}
           <div className={styles.bottomSection}>
             <span className={styles.detailLabel}>
-              PICKED UP BY: {container.pickupDriver || "Unassigned"}
+              PICKED UP BY:{" "}
+              {container.pickupDriverName ||
+                container.pickupDriver ||
+                "Unassigned"}
             </span>
             <span className={styles.detailLabel}>
               DATE: {container.createdAt || "Unassigned"}
