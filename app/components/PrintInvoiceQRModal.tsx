@@ -27,12 +27,19 @@ interface PrintInvoiceQRModalProps {
 // Still deliberately excludes PII: no consigner/consignee name, phone,
 // email, or address is ever encoded, since a printed label can be lost,
 // photographed, or left on a pallet.
-function buildQrPayload(invoiceNumber: string, item: QRModalItem) {
+function buildQrPayload(
+  invoiceNumber: string,
+  item: QRModalItem,
+  pieceId: string,
+) {
   return JSON.stringify({
     invoiceNumber,
     itemType: item.itemType,
-    itemId: item.id,
-    quantity: item.quantity,
+    // Unique per physical piece so each barrel/box carries its own label and
+    // the scanner can dedupe at the piece level if/when that's enabled.
+    itemId: pieceId,
+    // Each QR represents exactly ONE physical piece.
+    quantity: 1,
   });
 }
 
@@ -40,18 +47,31 @@ export default function PrintInvoiceQRModal({
   invoices,
   onClose,
 }: PrintInvoiceQRModalProps) {
+  // One QR per PHYSICAL PIECE, not per item row: a "Barrel ×10" line prints 10
+  // separate labels (Piece 1..10), "2 Barrels + 2 Boxes" prints 4 — each
+  // carrying its own item name, so every piece gets its own sticker to scan.
   const invoiceGroups = useMemo(
     () =>
       invoices.map((inv) => ({
         invoiceNumber: inv.invoiceNumber,
-        entries: inv.items.map((item) => ({
-          item,
-          payload: buildQrPayload(inv.invoiceNumber, item),
-        })),
+        entries: inv.items.flatMap((item) => {
+          const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
+          return Array.from({ length: qty }, (_, i) => {
+            const pieceId = `${item.id}-${i + 1}`;
+            return {
+              item,
+              pieceId,
+              pieceIndex: i + 1,
+              pieceTotal: qty,
+              payload: buildQrPayload(inv.invoiceNumber, item, pieceId),
+            };
+          });
+        }),
       })),
     [invoices],
   );
 
+  // Total QR codes to be printed (one per piece).
   const totalItemCount = invoiceGroups.reduce(
     (sum, group) => sum + group.entries.length,
     0,
@@ -102,17 +122,20 @@ export default function PrintInvoiceQRModal({
                   </p>
                 ) : (
                   <div className="qrPrintGrid">
-                    {group.entries.map(({ item, payload }) => (
-                      <div key={item.id} className="qrPrintCard">
+                    {group.entries.map((entry) => (
+                      <div key={entry.pieceId} className="qrPrintCard">
                         <QRCodeCanvas
-                          value={payload}
+                          value={entry.payload}
                           size={140}
                           level="M"
                           includeMargin
                         />
-                        <p className="qrCardLabel">{item.itemType}</p>
+                        <p className="qrCardLabel">{entry.item.itemType}</p>
                         <p className="qrCardSub">
-                          Qty: {item.quantity} · Inv: {group.invoiceNumber}
+                          {entry.pieceTotal > 1
+                            ? `Piece ${entry.pieceIndex} of ${entry.pieceTotal} · `
+                            : ""}
+                          Inv: {group.invoiceNumber}
                         </p>
                         <p className="qrCardBrand">Shipped by Ankrah F&L</p>
                       </div>
