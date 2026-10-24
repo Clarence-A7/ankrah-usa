@@ -95,7 +95,9 @@ export async function POST(req: NextRequest) {
         consigneePhone: true,
         destinationCity: true,
         amountDue: true,
-        items: { select: { itemType: true, quantity: true } },
+        // Cargo only — money lines (surcharge/tax/discount) are never loaded or
+        // counted as physical pieces.
+        items: { where: { isCharge: false }, select: { itemType: true, quantity: true } },
       },
     });
 

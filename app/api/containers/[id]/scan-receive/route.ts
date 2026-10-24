@@ -146,6 +146,8 @@ export async function POST(
       status: true,
       containerId: true,
       items: {
+        // Cargo only — money lines (surcharge/tax/discount) are never scanned.
+        where: { isCharge: false },
         select: { id: true, itemType: true, quantity: true, scannedQuantity: true, createdAt: true },
         orderBy: { createdAt: "asc" },
       },
@@ -236,7 +238,7 @@ export async function POST(
       // Re-read all item rows for this invoice (sees our own write) to
       // check whether the whole invoice is now fully scanned.
       const allItems = await tx.manifestItem.findMany({
-        where: { invoiceId: invoice.id },
+        where: { invoiceId: invoice.id, isCharge: false },
         select: { quantity: true, scannedQuantity: true },
       });
       invoicePiecesRemaining = allItems.reduce(
@@ -282,7 +284,7 @@ export async function POST(
   // 10. Container-wide progress (outside the transaction — read-only, and a
   //     few-ms-stale count here doesn't affect correctness of the write)
   const containerItems = await db.manifestItem.findMany({
-    where: { invoice: { containerId } },
+    where: { invoice: { containerId }, isCharge: false },
     select: { quantity: true, scannedQuantity: true },
   });
   const containerPiecesRemaining = containerItems.reduce(

@@ -44,7 +44,9 @@ if (!session?.userId) {
 
     const invoices = await db.invoice.findMany({
       where: { containerId },
-      include: { items: true },
+      // Cargo only — the packing list and unstuffing scan deal in physical
+      // pieces; surcharge/tax/discount are money lines, not manifest items.
+      include: { items: { where: { isCharge: false } } },
     });
 
     return NextResponse.json({ container, invoices }, { status: 200 });

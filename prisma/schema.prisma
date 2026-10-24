@@ -103,6 +103,10 @@ model ManifestItem {
   updatedAt       DateTime @updatedAt
   invoiceId       String
   scannedQuantity Int      @default(0)
+  // True for money lines (distance surcharge, sales tax, discount) that ride on
+  // the invoice but are NOT physical cargo. Excluded from every manifest list,
+  // piece count, and scan gate; still billed and shown in the price breakdown.
+  isCharge        Boolean  @default(false)
   invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId], map: "items_invoiceId_fkey")

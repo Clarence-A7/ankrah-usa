@@ -36,7 +36,8 @@ async function getVehicleQuoteRequests() {
             id: true,
             invoiceNumber: true,
             status: true,
-            items: { select: { id: true, itemType: true, quantity: true } },
+            // Cargo only — never print a QR label for a money line (surcharge/tax/discount).
+            items: { where: { isCharge: false }, select: { id: true, itemType: true, quantity: true } },
           },
         })
       : [];

@@ -16,7 +16,8 @@ async function getDriverAssignedPickups(staffIdString: string) {
         pickupDriver: cleanStaffId,
       },
       include: {
-        items: true,
+        // Cargo only — surcharge/tax/discount are money, not manifest items.
+        items: { where: { isCharge: false } },
       },
       orderBy: {
         createdAt: "desc",

@@ -9,7 +9,8 @@ const prisma = db;
 async function getInvoicesManifest() {
   try {
     const invoices = await prisma.invoice.findMany({
-      include: { items: true },
+      // Cargo only — surcharge/tax/discount are money, not manifest items.
+      include: { items: { where: { isCharge: false } } },
       orderBy: { createdAt: "desc" },
     });
 

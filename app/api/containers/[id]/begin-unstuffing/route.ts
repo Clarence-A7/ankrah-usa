@@ -192,11 +192,14 @@ export async function POST(
       });
 
       await tx.statusHistory.createMany({
+        // Stamp the real moment of the action so the customer tracking timeline
+        // sorts correctly. The admin-entered clearance date is kept on
+        // container.clearedAt for display, not on the history row.
         data: invoices.map((i) => ({
           invoiceId: i.id,
           status: "Cleared",
           changedById: session.userId,
-          createdAt: clearedAt, // timeline shows the real clearance date
+          createdAt: now,
         })),
       });
     }

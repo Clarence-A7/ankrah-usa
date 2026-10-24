@@ -43,6 +43,8 @@ export async function getContainersForDashboard() {
           amountPaid: true,
           amountDue: true,
           items: {
+            // Cargo only — surcharge/tax/discount must not inflate the piece count.
+            where: { isCharge: false },
             select: { quantity: true },
           },
         },

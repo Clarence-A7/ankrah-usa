@@ -87,6 +87,7 @@ export async function POST(
   }
 
   const arrivedAt = new Date(`${parsed.data.arrivalDate}T00:00:00`);
+  const now = new Date();
   let cascaded = 0;
 
   try {
@@ -112,11 +113,14 @@ export async function POST(
         });
 
         await tx.statusHistory.createMany({
+          // Stamp the real moment of the action so the customer tracking
+          // timeline sorts correctly. The admin-entered arrival date is kept
+          // on container.arrivedAt for display, not on the history row.
           data: invoices.map((i) => ({
             invoiceId: i.id,
             status: "Arrived",
             changedById: session.userId,
-            createdAt: arrivedAt,
+            createdAt: now,
           })),
         });
       }
