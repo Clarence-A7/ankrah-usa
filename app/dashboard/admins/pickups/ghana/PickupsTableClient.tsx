@@ -89,10 +89,22 @@ const STATUS_TABS = [
   {
     key: "Received At Origin",
     label: "Received",
-    // Received At Origin and everything further along the pipeline —
-    // In-Transit, Arrived, Cleared, Received At Hub, Out For Delivery,
-    // Delivered — but never Returned To Hub.
-    matches: (status: string) => isAtLeast(status, "Received At Origin"),
+    // ONLY invoices physically received at the origin hub, awaiting labeling +
+    // containerization — this is where the per-invoice Label (QR) action lives.
+    // Everything further along moves to the "Shipped" tab.
+    matches: (status: string) => status === "Received At Origin",
+  },
+  {
+    key: "Shipped",
+    label: "Shipped",
+    // Everything PAST origin receiving: In-Transit, Arrived, Cleared, Received
+    // At Hub, Out For Delivery, Delivered — plus the sideways Returned To Hub.
+    // Read-only (tracked on the Containers / Deliveries pages); this is the
+    // origin admin's "beyond received" view, so a Delivered invoice no longer
+    // lingers under "Received".
+    matches: (status: string) =>
+      isAtLeast(status, "In-Transit") ||
+      normalizeStatus(status) === "RETURNED_TO_HUB",
   },
 ] as const;
 
@@ -358,11 +370,12 @@ export default function PickupsTableClient({
   };
 
   // Action buttons only make sense within a single, homogeneous queue
-  // (Ready/Dispatched/Picked). The Received tab spans seven different
-  // pipeline statuses, and a cross-tab search can mix statuses too — in
-  // both cases a "Dispatch" or "Edit Driver" button would be actively
-  // wrong for most rows shown, so Status replaces Action there instead.
-  const showStatusColumn = isSearching || activeTab === "Received At Origin";
+  // (Ready/Dispatched/Picked/Received). The "Shipped" tab spans many pipeline
+  // statuses, and a cross-tab search can mix statuses too — in both cases a
+  // single per-row action would be wrong for most rows, so Status replaces
+  // Action there. The Received tab is homogeneous again, so it keeps its
+  // Action column (and the per-invoice Label button).
+  const showStatusColumn = isSearching || activeTab === "Shipped";
 
   // Scheduled-pickup is only meaningful pre-collection (Ready / Dispatched),
   // and during a cross-status search.
@@ -669,7 +682,8 @@ export default function PickupsTableClient({
 
           {selectedIds.length > 0 &&
             activeTab !== "Collected" &&
-            activeTab !== "Received At Origin" && (
+            activeTab !== "Received At Origin" &&
+            activeTab !== "Shipped" && (
               <Button
                 variant="primary"
                 onClick={handleBulkDispatch}
