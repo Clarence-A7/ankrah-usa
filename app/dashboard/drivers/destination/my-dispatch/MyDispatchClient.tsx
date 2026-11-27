@@ -168,6 +168,11 @@ export default function MyPickupsClient({
                   </span>
                 </div>
 
+                {/* Once delivered (task done), the card keeps only the invoice
+                    number and status — the consignee's name, destination,
+                    phone, payment and manifest are hidden for privacy. */}
+                {!isDelivered && (
+                  <>
                 <div className={styles.pickupCardBody}>
                   <div className={styles.pickupCardColumn}>
                     <span className={styles.pickupCardLabel}>Delivery</span>
@@ -248,6 +253,8 @@ export default function MyPickupsClient({
                   <Truck className={styles.collectBtnIcon} />
                   {isDelivered ? "Delivered" : "Confirm Delivery"}
                 </button>
+                  </>
+                )}
               </div>
             );
           })}

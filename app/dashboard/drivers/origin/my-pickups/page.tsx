@@ -6,6 +6,23 @@ import styles from "../../../styles/my-pickups.module.css";
 import Image from "next/image";
 import MyPickupsClient from "./MyPickupsClient";
 
+// PII on a completed pickup (Received At Origin and beyond — the DELIVERED tab)
+// is stripped server-side so it never reaches the driver's browser at all.
+// Mirrors the client's redaction, so the card and the payload agree.
+const ORIGIN_PIPELINE = [
+  "BOOKED", "READY_FOR_PICKUP", "PENDING_PICKUP", "COLLECTED", "RECEIVED_AT_ORIGIN",
+  "READY_FOR_SHIPMENT", "IN_TRANSIT", "ARRIVED", "CLEARED", "READY_FOR_DELIVERY",
+  "RETURNED_TO_HUB", "OUT_FOR_DELIVERY", "DELIVERED",
+];
+function normalizePickupStatus(s: string): string {
+  return s.trim().toUpperCase().replace(/[\s-]+/g, "_");
+}
+function isReceivedAtHubOrBeyond(status: string): boolean {
+  const idx = ORIGIN_PIPELINE.indexOf(normalizePickupStatus(status));
+  const hubIdx = ORIGIN_PIPELINE.indexOf("RECEIVED_AT_ORIGIN");
+  return idx !== -1 && idx >= hubIdx;
+}
+
 async function getDriverAssignedPickups(staffIdString: string) {
   try {
     if (!staffIdString) return [];
@@ -24,32 +41,38 @@ async function getDriverAssignedPickups(staffIdString: string) {
       },
     });
 
-    return shipments.map((shipment) => ({
-      id: shipment.id,
-      invoiceNumber: shipment.invoiceNumber,
-      status: shipment.status || "Booked",
-      shipmentMode: shipment.shipmentMode || "OCEAN",
-      containerId: shipment.containerId || null,
-      pickupStreet: shipment.pickupStreet || "",
-      pickupCity: shipment.pickupCity || "",
-      pickupState: shipment.pickupState || "",
-      pickupZip: shipment.pickupZip || "",
-      destinationCity: shipment.destinationCity || "Ghana",
-      consignerName: shipment.consignerName || "",
-      consignerPhone: shipment.consignerPhone || "",
-      consignerEmail: shipment.consignerEmail || "",
-      consigneeName: shipment.consigneeName || "",
-      consigneePhone: shipment.consigneePhone || "",
-      amountPaid: shipment.amountPaid ? Number(shipment.amountPaid) : 0,
-      amountDue: shipment.amountDue ? Number(shipment.amountDue) : 0,
-      createdAt: shipment.createdAt.toISOString(),
-      updatedAt: shipment.updatedAt.toISOString(),
-      items: (shipment.items || []).map((item: any) => ({
-        id: item.id,
-        itemType: item.itemType,
-        quantity: item.quantity,
-      })),
-    }));
+    return shipments.map((shipment) => {
+      const status = shipment.status || "Booked";
+      const redact = isReceivedAtHubOrBeyond(status);
+      return {
+        id: shipment.id,
+        invoiceNumber: shipment.invoiceNumber,
+        status,
+        shipmentMode: redact ? "" : shipment.shipmentMode || "OCEAN",
+        containerId: shipment.containerId || null,
+        pickupStreet: redact ? "" : shipment.pickupStreet || "",
+        pickupCity: redact ? "" : shipment.pickupCity || "",
+        pickupState: redact ? "" : shipment.pickupState || "",
+        pickupZip: redact ? "" : shipment.pickupZip || "",
+        destinationCity: redact ? "" : shipment.destinationCity || "Ghana",
+        consignerName: redact ? "" : shipment.consignerName || "",
+        consignerPhone: redact ? "" : shipment.consignerPhone || "",
+        consignerEmail: redact ? "" : shipment.consignerEmail || "",
+        consigneeName: redact ? "" : shipment.consigneeName || "",
+        consigneePhone: redact ? "" : shipment.consigneePhone || "",
+        amountPaid: redact ? 0 : shipment.amountPaid ? Number(shipment.amountPaid) : 0,
+        amountDue: redact ? 0 : shipment.amountDue ? Number(shipment.amountDue) : 0,
+        createdAt: shipment.createdAt.toISOString(),
+        updatedAt: shipment.updatedAt.toISOString(),
+        items: redact
+          ? []
+          : (shipment.items || []).map((item: any) => ({
+              id: item.id,
+              itemType: item.itemType,
+              quantity: item.quantity,
+            })),
+      };
+    });
   } catch (error) {
     console.error(
       "Database operational fault inside driver pickups lookup query:",

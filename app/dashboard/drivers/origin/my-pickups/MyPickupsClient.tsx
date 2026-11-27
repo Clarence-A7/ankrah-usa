@@ -260,6 +260,14 @@ export default function MyPickupsClient({
               shipmentStageIndex !== -1 &&
               shipmentStageIndex >= COLLECTED_INDEX;
 
+            // The card keeps only the invoice number + status once the shipment
+            // reaches the origin hub (Received At Origin) and beyond — i.e.
+            // everything under the driver's DELIVERED tab. Collected-but-not-yet
+            // -at-hub pickups still show full details.
+            const isReceivedAtHub =
+              shipmentStageIndex !== -1 &&
+              shipmentStageIndex >= RECEIVED_AT_ORIGIN_INDEX;
+
             return (
               <div key={shipment.id} className={styles.pickupCard}>
                 <div className={styles.pickupCardHeader}>
@@ -267,7 +275,7 @@ export default function MyPickupsClient({
                     <h3 className={styles.pickupCardInvoice}>
                       {shipment.invoiceNumber}
                     </h3>
-                    {shipment.shipmentMode && (
+                    {!isReceivedAtHub && shipment.shipmentMode && (
                       <span className={styles.pickupCardMode}>
                         {shipment.shipmentMode}
                       </span>
@@ -280,6 +288,11 @@ export default function MyPickupsClient({
                   </span>
                 </div>
 
+                {/* Once received at the origin hub (task handed over), the card
+                    keeps only the invoice number and status — the consigner's
+                    name, address, phone, payment and manifest are hidden. */}
+                {!isReceivedAtHub && (
+                  <>
                 <div className={styles.pickupCardBody}>
                   <div className={styles.pickupCardColumn}>
                     <span className={styles.pickupCardLabel}>Pickup</span>
@@ -376,6 +389,8 @@ export default function MyPickupsClient({
                   <PackageCheck className={styles.collectBtnIcon} />
                   {isCollected ? "Collected" : "Collect"}
                 </button>
+                  </>
+                )}
               </div>
             );
           })}

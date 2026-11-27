@@ -6,6 +6,13 @@ import styles from "../../../styles/my-pickups.module.css";
 import Image from "next/image";
 import MyPickupsClient from "./MyDispatchClient";
 
+// PII on a completed dispatch (Delivered — the COMPLETED tab) is stripped
+// server-side so it never reaches the driver's browser. Mirrors the client's
+// redaction, so the card and the payload agree.
+function isDeliveredStatus(status: string): boolean {
+  return status.trim().toUpperCase().replace(/[\s-]+/g, "_") === "DELIVERED";
+}
+
 async function getDriverAssignedPickups(staffIdString: string) {
   try {
     if (!staffIdString) return [];
@@ -24,32 +31,38 @@ async function getDriverAssignedPickups(staffIdString: string) {
       },
     });
 
-    return shipments.map((shipment) => ({
-      id: shipment.id,
-      invoiceNumber: shipment.invoiceNumber,
-      status: shipment.status || "Booked",
-      shipmentMode: shipment.shipmentMode || "OCEAN",
-      containerId: shipment.containerId || null,
-      pickupStreet: shipment.pickupStreet || "",
-      pickupCity: shipment.pickupCity || "",
-      pickupState: shipment.pickupState || "",
-      pickupZip: shipment.pickupZip || "",
-      destinationCity: shipment.destinationCity || "Ghana",
-      consignerName: shipment.consignerName || "",
-      consignerPhone: shipment.consignerPhone || "",
-      consignerEmail: shipment.consignerEmail || "",
-      consigneeName: shipment.consigneeName || "",
-      consigneePhone: shipment.consigneePhone || "",
-      amountPaid: shipment.amountPaid ? Number(shipment.amountPaid) : 0,
-      amountDue: shipment.amountDue ? Number(shipment.amountDue) : 0,
-      createdAt: shipment.createdAt.toISOString(),
-      updatedAt: shipment.updatedAt.toISOString(),
-      items: (shipment.items || []).map((item: any) => ({
-        id: item.id,
-        itemType: item.itemType,
-        quantity: item.quantity,
-      })),
-    }));
+    return shipments.map((shipment) => {
+      const status = shipment.status || "Booked";
+      const redact = isDeliveredStatus(status);
+      return {
+        id: shipment.id,
+        invoiceNumber: shipment.invoiceNumber,
+        status,
+        shipmentMode: redact ? "" : shipment.shipmentMode || "OCEAN",
+        containerId: shipment.containerId || null,
+        pickupStreet: redact ? "" : shipment.pickupStreet || "",
+        pickupCity: redact ? "" : shipment.pickupCity || "",
+        pickupState: redact ? "" : shipment.pickupState || "",
+        pickupZip: redact ? "" : shipment.pickupZip || "",
+        destinationCity: redact ? "" : shipment.destinationCity || "Ghana",
+        consignerName: redact ? "" : shipment.consignerName || "",
+        consignerPhone: redact ? "" : shipment.consignerPhone || "",
+        consignerEmail: redact ? "" : shipment.consignerEmail || "",
+        consigneeName: redact ? "" : shipment.consigneeName || "",
+        consigneePhone: redact ? "" : shipment.consigneePhone || "",
+        amountPaid: redact ? 0 : shipment.amountPaid ? Number(shipment.amountPaid) : 0,
+        amountDue: redact ? 0 : shipment.amountDue ? Number(shipment.amountDue) : 0,
+        createdAt: shipment.createdAt.toISOString(),
+        updatedAt: shipment.updatedAt.toISOString(),
+        items: redact
+          ? []
+          : (shipment.items || []).map((item: any) => ({
+              id: item.id,
+              itemType: item.itemType,
+              quantity: item.quantity,
+            })),
+      };
+    });
   } catch (error) {
     console.error(
       "Database operational fault inside driver pickups lookup query:",
