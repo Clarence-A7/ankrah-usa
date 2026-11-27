@@ -144,6 +144,10 @@ export default function PickupsTableClient({
   // Scheduled-pickup date filter (YYYY-MM-DD) — narrows the Ready/Pending queue
   // to one day's pickups so a whole date can be selected and bulk-dispatched.
   const [scheduleDateFilter, setScheduleDateFilter] = useState("");
+  // Super/origin-admin filters: outstanding balance, pickup city, destination city.
+  const [outstandingOnly, setOutstandingOnly] = useState(false);
+  const [pickupCityFilter, setPickupCityFilter] = useState("");
+  const [destCityFilter, setDestCityFilter] = useState("");
 
   // invoicesData is used directly below (not copied into its own useState),
   // so unlike ContainersClient this page needs no prop-sync effect —
@@ -180,6 +184,28 @@ export default function PickupsTableClient({
     [invoicesData, normalizedSearch],
   );
 
+  // Distinct, sorted city lists for the filter dropdowns.
+  const pickupCities = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          invoicesData.map((r) => (r.pickupCity || "").trim()).filter(Boolean),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
+    [invoicesData],
+  );
+  const destinationCities = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          invoicesData
+            .map((r) => (r.destinationCity || "").trim())
+            .filter(Boolean),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
+    [invoicesData],
+  );
+
   const activeTabDef = STATUS_TABS.find((tab) => tab.key === activeTab)!;
 
   const tabCounts = useMemo(() => {
@@ -194,14 +220,37 @@ export default function PickupsTableClient({
 
   // While searching, ignore the tab filter so matches in other tabs aren't hidden.
   const filteredData = useMemo(() => {
-    const base = isSearching
+    let base = isSearching
       ? searchedData
       : searchedData.filter((row) => activeTabDef.matches(row.status));
-    if (!scheduleDateFilter) return base;
-    return base.filter(
-      (row) => scheduledLocalYmd(row.scheduledPickupAt) === scheduleDateFilter,
-    );
-  }, [searchedData, activeTabDef, isSearching, scheduleDateFilter]);
+    if (scheduleDateFilter) {
+      base = base.filter(
+        (row) => scheduledLocalYmd(row.scheduledPickupAt) === scheduleDateFilter,
+      );
+    }
+    if (outstandingOnly) {
+      base = base.filter((row) => Number(row.amountDue) > 0);
+    }
+    if (pickupCityFilter) {
+      base = base.filter(
+        (row) => (row.pickupCity || "").trim() === pickupCityFilter,
+      );
+    }
+    if (destCityFilter) {
+      base = base.filter(
+        (row) => (row.destinationCity || "").trim() === destCityFilter,
+      );
+    }
+    return base;
+  }, [
+    searchedData,
+    activeTabDef,
+    isSearching,
+    scheduleDateFilter,
+    outstandingOnly,
+    pickupCityFilter,
+    destCityFilter,
+  ]);
 
   // Ready For Pickup invoices have no driver yet — showing an empty/N-D
   // Driver column for the whole tab is just noise. Still shown during a
@@ -745,6 +794,67 @@ export default function PickupsTableClient({
               Clear search
             </Button>
           )}
+
+          <label
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              fontSize: "0.85rem",
+              color: "#374151",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+            }}
+            title="Show only invoices with an outstanding balance"
+          >
+            <input
+              type="checkbox"
+              checked={outstandingOnly}
+              onChange={(e) => {
+                setOutstandingOnly(e.target.checked);
+                setSelectedIds([]);
+              }}
+            />
+            Outstanding balance
+          </label>
+
+          <select
+            value={pickupCityFilter}
+            onChange={(e) => {
+              setPickupCityFilter(e.target.value);
+              setSelectedIds([]);
+            }}
+            className={styles.searchInput}
+            style={{ maxWidth: "12rem" }}
+            aria-label="Filter by pickup city"
+            title="Filter by pickup city"
+          >
+            <option value="">All pickup cities</option>
+            {pickupCities.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={destCityFilter}
+            onChange={(e) => {
+              setDestCityFilter(e.target.value);
+              setSelectedIds([]);
+            }}
+            className={styles.searchInput}
+            style={{ maxWidth: "12rem" }}
+            aria-label="Filter by destination city"
+            title="Filter by destination city"
+          >
+            <option value="">All destination cities</option>
+            {destinationCities.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </div>
 
         {isSearching && (
