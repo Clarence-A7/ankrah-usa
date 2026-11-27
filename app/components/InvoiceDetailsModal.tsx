@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "./providers/AuthProvider";
+import PodViewerModal from "./PodViewerModal";
 import styles from "../dashboard/styles/dashboard.module.css";
 
 export interface InvoiceItemData {
@@ -83,6 +84,7 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
   onClose,
 }) => {
   const { user, isLoading } = useAuth();
+  const [podOpen, setPodOpen] = useState(false);
 
   if (!isOpen || !container || isLoading || !user) return null;
 
@@ -90,6 +92,15 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
   // app-wide rule in getContainersForDashboard). super_admin + origin_admin do.
   const canSeeFinancials =
     user.role === "super_admin" || user.role === "origin_admin";
+
+  // POD becomes available once a shipment is Delivered. super_admin and
+  // origin_admin can view it here (destination admins also see it on the
+  // Deliveries page); the /pod API enforces the same roles server-side.
+  const canViewPod =
+    (user.role === "super_admin" ||
+      user.role === "origin_admin" ||
+      user.role === "destination_admin") &&
+    container.status === "Delivered";
 
   const renderPaymentBadge = () => {
     const due = Number(container.amountDue || 0);
@@ -138,6 +149,7 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
   };
 
   return (
+    <>
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
@@ -288,9 +300,37 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
             <span className={styles.detailLabel}>
               DATE: {container.createdAt || "Unassigned"}
             </span>
+            {canViewPod && (
+              <button
+                type="button"
+                onClick={() => setPodOpen(true)}
+                style={{
+                  marginLeft: "auto",
+                  marginTop: 8,
+                  padding: "6px 14px",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  color: "#fff",
+                  background: "#2e63af",
+                  border: "none",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                }}
+              >
+                View Proof of Delivery
+              </button>
+            )}
           </div>
         </div>
       </div>
     </div>
+
+    <PodViewerModal
+      isOpen={podOpen}
+      shipmentId={container.id}
+      invoiceNumber={container.invoiceNumber || container.id}
+      onClose={() => setPodOpen(false)}
+    />
+    </>
   );
 };

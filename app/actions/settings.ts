@@ -347,3 +347,85 @@ export async function saveDiscountSettings(input: DiscountSettings): Promise<Mut
     return { success: false, error: "Could not save the discount settings." };
   }
 }
+
+// ── Service-line split (compliance receipt/quote) ────────────────────────────
+// The receipt and checkout present the blended price as three service
+// categories. These percentages split the SERVICE BASE (total minus tax and
+// discount) and must add up to 100. Shared with the PHP invoice + checkout via
+// the same `app_settings` rows (keys svc_split_*_pct).
+
+export interface ServiceSplit {
+  pickup: string; // percent, e.g. "15"  — USA Local Pickup / Consolidation / Coordination
+  ocean: string; // percent, e.g. "70"  — Ocean Shipment / Destination Port Charges
+  lastmile: string; // percent, e.g. "15" — Last Mile Delivery
+}
+
+const SPLIT_KEYS = {
+  pickup: "svc_split_pickup_pct",
+  ocean: "svc_split_ocean_pct",
+  lastmile: "svc_split_lastmile_pct",
+} as const;
+
+const SPLIT_DEFAULTS: ServiceSplit = { pickup: "15", ocean: "70", lastmile: "15" };
+
+const shareField = z
+  .string()
+  .trim()
+  .max(8)
+  .refine((v) => v !== "" && !Number.isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 100, {
+    message: "Each share must be a number between 0 and 100.",
+  });
+
+const SplitSchema = z
+  .object({ pickup: shareField, ocean: shareField, lastmile: shareField })
+  .refine(
+    (v) => Math.abs(Number(v.pickup) + Number(v.ocean) + Number(v.lastmile) - 100) < 0.01,
+    { message: "The three shares must add up to exactly 100%." },
+  );
+
+export async function getServiceSplit(): Promise<ServiceSplit> {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok) return SPLIT_DEFAULTS;
+
+  const rows = await db.app_settings.findMany({
+    where: { key: { in: Object.values(SPLIT_KEYS) } },
+  });
+  const map = new Map(rows.map((r) => [r.key, r.value]));
+  return {
+    pickup: map.get(SPLIT_KEYS.pickup) ?? SPLIT_DEFAULTS.pickup,
+    ocean: map.get(SPLIT_KEYS.ocean) ?? SPLIT_DEFAULTS.ocean,
+    lastmile: map.get(SPLIT_KEYS.lastmile) ?? SPLIT_DEFAULTS.lastmile,
+  };
+}
+
+export async function saveServiceSplit(input: ServiceSplit): Promise<MutationResult> {
+  const auth = await requireSuperAdmin();
+  if (!auth.ok) return { success: false, error: auth.error };
+
+  const parsed = SplitSchema.safeParse({
+    pickup: (input.pickup ?? "").trim(),
+    ocean: (input.ocean ?? "").trim(),
+    lastmile: (input.lastmile ?? "").trim(),
+  });
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid service split." };
+  }
+
+  const entries: Array<[string, string]> = [
+    [SPLIT_KEYS.pickup, parsed.data.pickup],
+    [SPLIT_KEYS.ocean, parsed.data.ocean],
+    [SPLIT_KEYS.lastmile, parsed.data.lastmile],
+  ];
+
+  try {
+    await db.$transaction(
+      entries.map(([key, value]) =>
+        db.app_settings.upsert({ where: { key }, update: { value }, create: { key, value } }),
+      ),
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("saveServiceSplit failed:", error); // detail server-side only
+    return { success: false, error: "Could not save the service split." };
+  }
+}

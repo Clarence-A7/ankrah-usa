@@ -12,6 +12,7 @@ import { createHash, timingSafeEqual } from "crypto";
 import { z } from "zod";
 import { db } from "../../../lib/db";
 import { getSession } from "../../../lib/session"; // adjust to your session utils path
+import { sendMail } from "../../../lib/mail";
 
 const BodySchema = z.object({
   containerNumber: z
@@ -39,6 +40,36 @@ function sealsMatch(submitted: string, stored: string): boolean {
   const a = createHash("sha256").update(submitted.toUpperCase()).digest();
   const b = createHash("sha256").update(stored.toUpperCase()).digest();
   return timingSafeEqual(a, b);
+}
+
+function escapeHtml(s: string): string {
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!),
+  );
+}
+
+// Inner HTML for the "now In-Transit" notice — wrapped in the branded card by
+// sendMail. Sent to the booking customer (consigner) when their container is
+// sealed and their shipment begins the ocean leg.
+function inTransitEmailHtml(d: {
+  consignerName: string;
+  invoiceNumber: string;
+  consigneeName: string;
+  destinationCity: string;
+  vessel: string | null;
+}): string {
+  const vesselLine = d.vessel
+    ? `<p style="margin:0 0 12px;">Vessel: <strong>${escapeHtml(d.vessel)}</strong></p>`
+    : "";
+  return `
+    <h2 style="color:#0f172a;font-size:1.3rem;margin:0 0 4px;text-align:center;">Your shipment is on its way &#128674;</h2>
+    <p style="text-align:center;color:#2e63af;font-weight:600;margin:0 0 22px;">Now In Transit to Ghana</p>
+    <p style="margin:0 0 12px;">Hi <strong>${escapeHtml(d.consignerName)}</strong>,</p>
+    <p style="margin:0 0 12px;">Your shipment <strong>#${escapeHtml(d.invoiceNumber)}</strong> has left our USA hub and is now on the ocean leg to <strong>${escapeHtml(d.destinationCity)}</strong>, consigned to <strong>${escapeHtml(d.consigneeName)}</strong>.</p>
+    ${vesselLine}
+    <p style="margin:0 0 12px;">We&#39;ll email you again when it arrives at the port in Ghana and when it&#39;s out for delivery.</p>
+    <p style="margin:22px 0 0;">Thank you for shipping with Ankrah F&amp;L.</p>`;
 }
 
 export async function POST(req: NextRequest) {
@@ -131,7 +162,14 @@ export async function POST(req: NextRequest) {
       // Only invoices in the expected prior state cascade
       const invoices = await tx.invoice.findMany({
         where: { containerId: containerNumber, status: CASCADE_FROM },
-        select: { id: true },
+        select: {
+          id: true,
+          invoiceNumber: true,
+          consignerEmail: true,
+          consignerName: true,
+          consigneeName: true,
+          destinationCity: true,
+        },
       });
 
       const ids = invoices.map((i) => i.id);
@@ -152,8 +190,31 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return { cascaded: ids.length };
+      return { cascaded: ids.length, invoices };
     });
+
+    // Notify each consigner that their shipment has departed and is now
+    // In-Transit. Best-effort and sequential: the seal transaction has already
+    // committed, so a mail failure must never undo it or fail the request.
+    for (const inv of result.invoices) {
+      const email = (inv.consignerEmail || "").trim();
+      if (!email) continue;
+      try {
+        await sendMail({
+          to: email,
+          subject: `In Transit — Invoice #${inv.invoiceNumber}`,
+          bodyHtml: inTransitEmailHtml({
+            consignerName: inv.consignerName ?? "",
+            invoiceNumber: inv.invoiceNumber,
+            consigneeName: inv.consigneeName ?? "",
+            destinationCity: inv.destinationCity ?? "",
+            vessel: vessel || null,
+          }),
+        });
+      } catch (mailErr) {
+        console.error(`In-Transit email failed for ${inv.invoiceNumber}:`, mailErr);
+      }
+    }
 
     return NextResponse.json({
       ok: true,
