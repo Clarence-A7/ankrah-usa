@@ -317,7 +317,7 @@ export const InvoiceDetailsModal: React.FC<ContainerDetailsModalProps> = ({
                   cursor: "pointer",
                 }}
               >
-                View Proof of Delivery
+                View POD
               </button>
             )}
           </div>
