@@ -6,9 +6,10 @@ import styles from "../../../styles/my-pickups.module.css";
 import Image from "next/image";
 import MyPickupsClient from "./MyPickupsClient";
 
-// PII on a completed pickup (Received At Origin and beyond — the DELIVERED tab)
-// is stripped server-side so it never reaches the driver's browser at all.
-// Mirrors the client's redaction, so the card and the payload agree.
+// Contact, location, payment and manifest for a completed pickup (Received At
+// Origin and beyond — the DELIVERED tab) are stripped server-side so they never
+// reach the driver's browser. The consigner/consignee NAME is retained so the
+// driver can still search completed pickups by name; the card still hides it.
 const ORIGIN_PIPELINE = [
   "BOOKED", "READY_FOR_PICKUP", "PENDING_PICKUP", "COLLECTED", "RECEIVED_AT_ORIGIN",
   "READY_FOR_SHIPMENT", "IN_TRANSIT", "ARRIVED", "CLEARED", "READY_FOR_DELIVERY",
@@ -55,10 +56,10 @@ async function getDriverAssignedPickups(staffIdString: string) {
         pickupState: redact ? "" : shipment.pickupState || "",
         pickupZip: redact ? "" : shipment.pickupZip || "",
         destinationCity: redact ? "" : shipment.destinationCity || "Ghana",
-        consignerName: redact ? "" : shipment.consignerName || "",
+        consignerName: shipment.consignerName || "", // kept for name search; hidden on the card
         consignerPhone: redact ? "" : shipment.consignerPhone || "",
         consignerEmail: redact ? "" : shipment.consignerEmail || "",
-        consigneeName: redact ? "" : shipment.consigneeName || "",
+        consigneeName: shipment.consigneeName || "", // kept for name search; hidden on the card
         consigneePhone: redact ? "" : shipment.consigneePhone || "",
         amountPaid: redact ? 0 : shipment.amountPaid ? Number(shipment.amountPaid) : 0,
         amountDue: redact ? 0 : shipment.amountDue ? Number(shipment.amountDue) : 0,
