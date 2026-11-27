@@ -101,7 +101,9 @@ const overlay: React.CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   padding: "1rem",
-  zIndex: 1000,
+  // Above the Invoice Details modal overlay (z-index 2000), since the POD viewer
+  // is opened from inside it and must sit on top.
+  zIndex: 3000,
 };
 const card: React.CSSProperties = {
   background: "#fff",
